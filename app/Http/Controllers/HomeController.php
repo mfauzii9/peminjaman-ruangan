@@ -64,14 +64,15 @@ class HomeController extends Controller
                 'po.room_id',
                 'po.start_time',
                 'po.end_time',
+                'po.occ_date', // Tambahan untuk membedakan tanggal
                 DB::raw("COALESCE(pt.mata_kuliah, 'PBM') as mata_kuliah"),
                 DB::raw("COALESCE(pt.kelas, '-') as kelas"),
                 DB::raw("COALESCE(pt.dosen, '-') as dosen"),
                 'r.name as room_name',
                 'r.floor'
             )
-            ->whereDate('po.occ_date', $selectedTanggal)
-            ->where('po.status', 'approved') // Hanya yang disetujui (termasuk hasil reschedule)
+            ->whereDate('po.occ_date', '>=', $selectedTanggal) // Menampilkan tanggal yg dipilih dan hari selanjutnya
+            ->where('po.status', 'approved') 
             ->when($lantai !== 'all', function ($q) use ($lantai) {
                 $q->where('r.floor', $lantai);
             })
@@ -93,8 +94,8 @@ class HomeController extends Controller
                 'r.name as room_name',
                 'r.floor'
             )
-            ->whereDate('br.start_time', $selectedTanggal)
-            ->where('br.status', 'disetujui') // HANYA tampilkan yang sudah di-ACC
+            ->whereDate('br.start_time', '>=', $selectedTanggal) // Menampilkan tanggal yg dipilih dan hari selanjutnya
+            ->where('br.status', 'disetujui')
             ->when($lantai !== 'all', function ($q) use ($lantai) {
                 $q->where('r.floor', $lantai);
             })
@@ -117,7 +118,7 @@ class HomeController extends Controller
                 'r.name as room_name',
                 'r.floor'
             )
-            ->whereDate('rb.start_time', $selectedTanggal)
+            ->whereDate('rb.start_time', '>=', $selectedTanggal) // Menampilkan tanggal yg dipilih dan hari selanjutnya
             ->where('rb.status', 'terbooking') 
             ->when($lantai !== 'all', function ($q) use ($lantai) {
                 $q->where('r.floor', $lantai);
@@ -188,6 +189,7 @@ class HomeController extends Controller
         foreach ($pbmRows as $item) {
             $itemStart = Carbon::parse($item->start_time)->format('H:i:s');
             $itemEnd = Carbon::parse($item->end_time)->format('H:i:s');
+            $tglPbm = Carbon::parse($item->occ_date)->format('d/m/Y'); // Tanggal kegiatan
 
             foreach ($timeSlots as $slot) {
                 if ($this->isTimeOverlap($slot['start'], $slot['end'], $itemStart, $itemEnd)) {
@@ -199,7 +201,7 @@ class HomeController extends Controller
 
                     $scheduleMap[$cellKey][] = array(
                         'type'       => 'pbm',
-                        'title'      => $item->mata_kuliah,
+                        'title'      => $item->mata_kuliah . ' (' . $tglPbm . ')',
                         'subtitle'   => 'Kelas: ' . $item->kelas,
                         'meta'       => 'Dosen: ' . $item->dosen,
                         'start_time' => $itemStart,
@@ -213,6 +215,7 @@ class HomeController extends Controller
         foreach ($mahasiswaRows as $item) {
             $itemStart = Carbon::parse($item->start_time)->format('H:i:s');
             $itemEnd = Carbon::parse($item->end_time)->format('H:i:s');
+            $tglMhs = Carbon::parse($item->start_time)->format('d/m/Y'); // Tanggal kegiatan
 
             foreach ($timeSlots as $slot) {
                 if ($this->isTimeOverlap($slot['start'], $slot['end'], $itemStart, $itemEnd)) {
@@ -224,7 +227,7 @@ class HomeController extends Controller
 
                     $scheduleMap[$cellKey][] = array(
                         'type'       => 'mahasiswa',
-                        'title'      => 'Peminjaman Ruangan',
+                        'title'      => 'Peminjaman Ruangan (' . $tglMhs . ')',
                         'subtitle'   => $item->org_name ? $item->org_name : 'Mahasiswa',
                         'meta'       => 'PJ: ' . ($item->responsible_name ? $item->responsible_name : '-'),
                         'start_time' => $itemStart,
@@ -238,6 +241,7 @@ class HomeController extends Controller
         foreach ($bookingCepatRows as $item) {
             $itemStart = Carbon::parse($item->start_time)->format('H:i:s');
             $itemEnd = Carbon::parse($item->end_time)->format('H:i:s');
+            $tglBooking = Carbon::parse($item->start_time)->format('d/m/Y'); // Tanggal kegiatan
 
             foreach ($timeSlots as $slot) {
                 if ($this->isTimeOverlap($slot['start'], $slot['end'], $itemStart, $itemEnd)) {
@@ -249,7 +253,7 @@ class HomeController extends Controller
 
                     $scheduleMap[$cellKey][] = array(
                         'type'       => 'quick_booking',
-                        'title'      => $item->title ? $item->title : 'Booking Ruangan',
+                        'title'      => ($item->title ? $item->title : 'Booking Ruangan') . ' (' . $tglBooking . ')',
                         'subtitle'   => 'Oleh: ' . ucfirst($item->source),
                         'meta'       => $item->note ? $item->note : '-',
                         'start_time' => $itemStart,
