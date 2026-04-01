@@ -477,7 +477,7 @@
             <table id="unifiedTable">
               <thead>
                 <tr>
-                  <th class="sticky-left" style="width: 100px;">ID</th>
+                  <th class="sticky-left" style="width: 180px;">Pengajuan</th>
                   <th style="width: 180px;">Ruangan</th>
                   <th style="min-width: 250px;">Kegiatan / Peminjam</th>
                   <th style="min-width: 200px;">Organisasi / Sumber</th>
@@ -732,7 +732,7 @@
           const detailUrl = URL_CONFIRM_BASE + '/' + encodeURIComponent(r.id);
 
           return `<tr>
-            <td class="sticky-left"><div class="id-pill">#${escapeHtml(r.id)}</div></td>
+            <td class="sticky-left"><div class="id-pill">${dtCreated}</div></td>
             <td><div class="fw-bold">${roomLabel}</div><div class="text-sub">Lantai ${roomFloor}</div></td>
             <td><div class="fw-bold">${escapeHtml(r.title || '-')}</div><div class="text-sub"><i class="fa-solid fa-envelope"></i> ${escapeHtml(r.email || '-')}</div><div class="text-sub"><i class="fa-solid fa-phone"></i> ${escapeHtml(r.phone || '-')}</div></td>
             <td><div class="fw-bold">${escapeHtml(r.org_name || '-')}</div><div class="text-sub"><span style="padding:2px 6px; background:#eff6ff; border-radius:4px; color:#1e40af">Pengajuan Mhs</span></div></td>
@@ -744,7 +744,7 @@
 
         if (kind === 'block'){
           return `<tr>
-            <td class="sticky-left"><div class="id-pill">#${escapeHtml(r.id)}</div></td>
+            <td class="sticky-left"><div class="id-pill">${dtCreated}</div></td>
             <td><div class="fw-bold">${roomLabel}</div><div class="text-sub">Lantai ${roomFloor}</div></td>
             <td><div class="fw-bold">${escapeHtml(r.title || 'Booking Cepat')}</div><div class="text-sub"><i class="fa-solid fa-align-left"></i> ${escapeHtml(r.note || '-')}</div></td>
             <td><div class="fw-bold">Booking Admin</div><div class="text-sub"><span style="padding:2px 6px; background:#f5f3ff; border-radius:4px; color:#5b21b6">Booking Cepat</span></div></td>
@@ -761,7 +761,7 @@
           let txt = isBatal ? 'Dibatalkan' : 'Jadwal PBM';
 
           return `<tr>
-            <td class="sticky-left"><div class="id-pill">#${escapeHtml(r.id)}</div></td>
+            <td class="sticky-left"><div class="id-pill">${dtCreated}</div></td>
             <td><div class="fw-bold">${roomLabel}</div><div class="text-sub">Lantai ${roomFloor}</div></td>
             <td><div class="fw-bold">${escapeHtml(r.title || 'PBM')}</div><div class="text-sub"><i class="fa-solid fa-graduation-cap"></i> ${escapeHtml(r.note || '-')}</div></td>
             <td><div class="fw-bold">${escapeHtml(r.org_name || 'Reguler')}</div><div class="text-sub"><span style="padding:2px 6px; background:#ecfeff; border-radius:4px; color:#0f766e">Jadwal Kuliah</span></div></td>
@@ -784,6 +784,7 @@
       tbody.innerHTML = rows.map(r=>{
         const roomLabel = escapeHtml(r.name ?? '-');
         const roomFloor = escapeHtml(r.floor ?? '-');
+        const dtCreated = escapeHtml(r.created_at || '-');
         const statusRaw = (r.room_status || 'kosong').toLowerCase();
         const soonFlag  = Number(r.soon_flag || 0);
 
@@ -802,7 +803,7 @@
         const quickUrl = quickBase + `?room_id=${encodeURIComponent(r.id)}`;
 
         return `<tr>
-          <td class="sticky-left"><div class="id-pill">#${escapeHtml(r.id)}</div></td>
+          <td class="sticky-left"><div class="id-pill">${dtCreated}</div></td>
           <td><div class="fw-bold">${roomLabel}</div><div class="text-sub">Lantai ${roomFloor} | Kapasitas: ${escapeHtml(r.capacity ?? '-')}</div></td>
           <td colspan="2">
             ${statusRaw === 'terisi' 
