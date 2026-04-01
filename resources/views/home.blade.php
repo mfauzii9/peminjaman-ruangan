@@ -294,13 +294,19 @@
       width:max-content;
       min-width:100%;
       border-collapse:collapse;
+      table-layout: fixed; /* Membuat ukuran kolom fiks/kaku */
     }
 
-    /* Table Grid Lines */
+    /* Table Grid Lines - DENGAN UKURAN FIKS */
     .schedule-table th, .schedule-table td {
       border: 1px solid var(--border-regular);
       padding: 0.6rem;
       vertical-align: top;
+      width: 200px; /* Ukuran Lebar Fiks */
+      min-width: 200px;
+      max-width: 200px;
+      overflow: hidden;
+      word-wrap: break-word;
     }
 
     /* Sticky Top Header (Rooms) */
@@ -318,8 +324,6 @@
     .room-floor { font-size:var(--fs-xs); color:var(--text-tertiary); margin-top:0.25rem; font-weight: 600; }
 
     .schedule-cell{
-      min-width:160px; 
-      width:160px;
       background:#ffffff;
       position: relative;
     }
@@ -559,7 +563,8 @@
       .filter-item { width: 100%; }
       .filter-item select, .filter-item input { width: 100%; }
       
-      .schedule-cell { min-width: 140px; width: 140px; }
+      /* Mengatur ulang ukuran fiks untuk Mobile */
+      .schedule-table th, .schedule-table td { width: 160px; min-width: 160px; max-width: 160px; }
       .schedule-table thead th { padding: 0.75rem 0.5rem; }
 
       .guide-grid{ grid-template-columns:1fr; }
