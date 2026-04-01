@@ -340,44 +340,43 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* ✅ FLOATING PILL BUTTON (KEMBALI) - DENGAN PEMISAH TIPIS */
+        /* ✅ FLOATING PILL BUTTON (KEMBALI) - DESAIN BIRU SOLID */
         .fab-pill {
             position: fixed;
-            bottom: 2rem;
-            right: 2rem;
+            bottom: 30px;
+            right: 30px;
+            background: var(--primary-600);
+            color: #ffffff;
+            padding: 14px 24px;
+            border-radius: 999px;
             display: inline-flex;
             align-items: center;
-            gap: 0.625rem;
-            padding: 0.75rem 1.5rem;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            color: var(--text-secondary);
-            font-weight: 600;
-            font-size: 0.875rem;
+            gap: 10px;
+            font-weight: 800;
+            font-size: 14px;
             text-decoration: none;
-            border: 1px solid var(--border-medium);
-            border-radius: 9999px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 999;
-        }
-
-        .fab-pill i {
-            font-size: 1rem;
-            color: var(--text-tertiary);
-            transition: color 0.3s;
+            box-shadow: 0 10px 25px rgba(79, 70, 229, 0.4);
+            z-index: 1050;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 2px solid rgba(255, 255, 255, 0.2);
         }
 
         .fab-pill:hover {
-            color: var(--primary-600);
-            border-color: var(--primary-300);
-            transform: translateY(-4px);
-            box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.15), 0 8px 10px -6px rgba(79, 70, 229, 0.1);
+            background: var(--primary-700);
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 14px 30px rgba(79, 70, 229, 0.5);
+            color: #ffffff;
+        }
+
+        .fab-pill i {
+            font-size: 16px;
+            color: #ffffff;
+            transition: transform 0.3s ease;
         }
 
         .fab-pill:hover i {
-            color: var(--primary-600);
+            transform: translateX(-4px);
+            color: #ffffff;
         }
 
         @media (max-width: 1024px) {
@@ -391,10 +390,10 @@
             .card-body { padding: 1rem; }
             
             .fab-pill {
-                bottom: 1.5rem;
-                right: 1.5rem;
-                padding: 0.625rem 1.25rem;
-                font-size: 0.8125rem;
+                bottom: 20px;
+                right: 20px;
+                padding: 12px 20px;
+                font-size: 13px;
             }
         }
 

@@ -56,7 +56,7 @@
       color: var(--text);
       background: var(--bg);
       line-height: 1.6;
-      padding-bottom: 120px; 
+      padding-bottom: 90px; 
     }
 
     .cek-wrap{
@@ -65,17 +65,15 @@
         radial-gradient(900px 320px at 85% -10%, rgba(16,185,129,.12), transparent 55%),
         var(--bg);
       min-height:calc(100vh - 20px);
-      padding: 18px 0 120px; 
+      padding: 18px 0 90px; 
     }
 
     .cek-wrap .wrap{width:100%;max-width: 980px;margin: 0 auto;padding: 18px 14px 26px;}
     .cek-wrap .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-radius: 18px;border:1px solid rgba(226,232,240,.9);background: rgba(255,255,255,.82);backdrop-filter: blur(14px);box-shadow: var(--shadow2);}
     
     .cek-wrap .brand{display:flex; align-items:center; gap:10px;min-width:0;font-weight:900;letter-spacing:.2px;}
-    /* REVISI: Ukuran logo diperkecil agar seimbang dengan teks */
     .cek-wrap .brand .logo{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;background: linear-gradient(135deg, rgba(37,99,235,.95), rgba(14,165,233,.85));box-shadow: 0 18px 40px rgba(37,99,235,.18);color:#fff;flex:0 0 auto;border:1px solid rgba(255,255,255,.35);}
     .cek-wrap .brand .t{display:flex;flex-direction:column;line-height:1.15;min-width:0;}
-    /* REVISI: Ukuran font diperkecil */
     .cek-wrap .brand .t span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis; font-size: 14.5px; font-weight: 800;}
     .cek-wrap .brand .t small{margin-top:2px;color:var(--muted);font-weight:600;font-size: 11px;}
     
@@ -84,9 +82,7 @@
     .cek-wrap .card{margin-top:12px;background: rgba(255,255,255,.92);border:1px solid rgba(226,232,240,.9);border-radius: var(--radius);box-shadow: var(--shadow);overflow:hidden;}
     .cek-wrap .hero{padding:16px 14px 14px;background:radial-gradient(900px 240px at 12% 0%, rgba(37,99,235,.14), transparent 60%),rgba(255,255,255,.96);border-bottom:1px solid rgba(241,245,249,.9);}
     
-    /* REVISI: Ukuran H1 diperkecil */
     .cek-wrap h1{margin:0;font-size: 18px;font-weight:900;letter-spacing:.2px;line-height:1.2;display:flex;gap:8px;align-items:center;}
-    /* REVISI: Ukuran Subtitle diperkecil */
     .cek-wrap .subtitle{margin:6px 0 0;color:var(--muted);font-weight:500;font-size: 12.5px;max-width: 80ch;}
     
     .cek-wrap .content{ padding:14px; }
@@ -129,116 +125,51 @@
     .cek-wrap.is-loading .searchBox{opacity:.92;pointer-events:none}
     .cek-wrap.is-loading #hasil{opacity:.65;pointer-events:none}
 
-    /* --- ELEGANT BOTTOM NAV (FLOATING DOCK) PUTIH & BORDER BIRU GELAP --- */
-    .bottom-nav {
+    /* ✅ FLOATING PILL BUTTON (KEMBALI) - DESAIN BIRU SOLID */
+    .fab-pill {
         position: fixed;
-        bottom: 24px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: calc(100% - 32px);
-        max-width: 420px;
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        border: 1px solid #1e3a8a;
+        bottom: 30px;
+        right: 30px;
+        background: var(--accent);
+        color: #ffffff;
+        padding: 14px 24px;
         border-radius: 999px;
-        box-shadow: 0 10px 40px rgba(30, 58, 138, 0.15);
-        display: flex;
-        justify-content: space-around;
-        padding: 8px 12px;
-        z-index: 1050;
-        transition: all 0.3s ease;
-    }
-    .nav-item {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
+        display: inline-flex;
         align-items: center;
-        justify-content: center;
-        gap: 4px;
+        gap: 10px;
+        font-weight: 800;
+        font-size: 14px;
         text-decoration: none;
-        color: var(--muted);
-        transition: all 0.3s ease;
-        border-radius: 20px;
-        padding: 4px 0;
-    }
-    .nav-icon-wrap {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 50px;
-        height: 32px;
-        border-radius: 16px;
-        transition: all 0.3s ease;
-    }
-    .nav-icon-wrap i {
-        font-size: 18px;
-        transition: transform 0.3s ease;
-    }
-    .nav-item span {
-        font-size: 11px;
-        font-weight: 700;
-        transition: color 0.3s ease;
-    }
-    .nav-item:hover .nav-icon-wrap i {
-        transform: translateY(-2px);
-    }
-    .nav-item:hover span {
-        color: var(--text);
-    }
-    .nav-item.active {
-        color: var(--accent); 
-    }
-    .nav-item.active .nav-icon-wrap {
-        background: var(--accentSoft);
-        color: var(--accent);
-    }
-    .nav-item.active span {
-        color: var(--accent);
+        box-shadow: 0 10px 25px rgba(37, 99, 235, 0.4);
+        z-index: 1050;
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        border: 2px solid rgba(255, 255, 255, 0.2);
     }
 
-    /* RESPONSIVE DESKTOP/LAPTOP: Melebar & Berubah Layout untuk Bottom Nav */
-    @media(min-width: 768px) {
-        .bottom-nav {
-            max-width: max-content;
-            min-width: 520px;
-            padding: 10px 24px;
-            gap: 16px;
-            bottom: 32px;
-        }
-        .nav-item {
-            flex-direction: row;
-            padding: 10px 24px;
-            gap: 12px;
-            border-radius: 999px;
-            flex: 0 1 auto;
-        }
-        .nav-item span {
-            font-size: 13.5px;
-            font-weight: 700;
-        }
-        .nav-icon-wrap {
-            width: auto;
-            height: auto;
-            background: transparent !important;
-        }
-        .nav-icon-wrap i {
-            font-size: 18px;
-        }
-        .nav-item:hover {
-            background: var(--accentSoft);
-        }
-        .nav-item.active {
-            background: var(--accent);
-            color: #fff;
-            box-shadow: 0 4px 14px rgba(37,99,235,0.25);
-        }
-        .nav-item.active .nav-icon-wrap i,
-        .nav-item.active span {
-            color: #fff !important;
-        }
-        .nav-item:hover.active {
-            transform: translateY(-2px);
+    .fab-pill:hover {
+        background: var(--accent2);
+        transform: translateY(-4px) scale(1.02);
+        box-shadow: 0 14px 30px rgba(37, 99, 235, 0.5);
+        color: #ffffff;
+    }
+
+    .fab-pill i {
+        font-size: 16px;
+        color: #ffffff;
+        transition: transform 0.3s ease;
+    }
+
+    .fab-pill:hover i {
+        transform: translateX(-4px);
+        color: #ffffff;
+    }
+
+    @media (max-width: 640px) {
+        .fab-pill {
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            font-size: 13px;
         }
     }
   </style>
@@ -405,26 +336,9 @@
     </div>
   </div>
 
-  <nav class="bottom-nav">
-      <a href="{{ url('/') }}" class="nav-item">
-          <div class="nav-icon-wrap">
-              <i class="fa-solid fa-house"></i>
-          </div>
-          <span>Beranda</span>
-      </a>
-      <a href="{{ route('ruangan.index') }}" class="nav-item">
-          <div class="nav-icon-wrap">
-              <i class="fa-solid fa-layer-group"></i>
-          </div>
-          <span>Ruangan</span>
-      </a>
-      <a href="{{ url('/cek-pengajuan') }}" class="nav-item active">
-          <div class="nav-icon-wrap">
-              <i class="fa-solid fa-clock-rotate-left"></i>
-          </div>
-          <span>Pengajuan</span>
-      </a>
-  </nav>
+  <a href="{{ url('/') }}" class="fab-pill" title="Kembali ke Beranda">
+      <i class="fa-solid fa-arrow-left"></i> Kembali
+  </a>
 
   @if($searched)
     <script>
@@ -576,3 +490,4 @@
   </script>
 </body>
 </html>
+website peminjaman ruangan di institut digital ekonomi lpkia bandung, dengan fitur cek status pengajuan berdasarkan kode booking yang diberikan oleh admin setelah melakukan peminjaman ruangan. pengguna dapat memasukkan kode booking untuk melihat detail peminjaman, termasuk status admin, catatan, dan informasi terkait lainnya. fitur ini memudahkan pengguna untuk memantau status pengajuan mereka tanpa harus menghubungi admin secara langsung. dan bisa di cek juga di email untuk konfirmasi peminjaman ruangan nya sesuai dengan email yang anda isi di form peminjaman ruangan.

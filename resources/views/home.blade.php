@@ -76,7 +76,6 @@
       color:var(--text-primary);
       line-height:1.6;
       font-size:var(--fs-base);
-      padding-bottom: 120px; 
     }
 
     /* --- CUSTOM SCROLLBAR --- */
@@ -162,35 +161,48 @@
       font-size:var(--fs-base);
       color:rgba(255,255,255,0.85);
     }
-    .hero-actions{
-      margin-top:2rem;
-      display:flex;
-      gap:1rem;
-      justify-content:center;
-    }
 
-    /* --- BUTTONS --- */
-    .btn{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      gap:0.5rem;
-      padding:0.75rem 1.5rem;
-      border-radius:999px;
-      text-decoration:none;
-      font-weight:800;
-      font-size:var(--fs-sm);
-      transition:all 0.2s ease;
-      cursor:pointer;
-      border: none;
+    /* --- CENTERED MAIN NAVIGATION (PILLS) --- */
+    .hero-nav-pills {
+      margin-top: 2rem;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1rem;
     }
-    .btn-primary{ background: var(--primary-600); color:#fff; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
-    .btn-primary:hover{ background: var(--primary-700); transform: translateY(-2px); }
-    .btn-ghost{
-      background: rgba(255,255,255,0.1); color:#fff;
-      backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.2);
+    .nav-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.75rem 1.75rem;
+      border-radius: 999px; /* Bentuk Kapsul */
+      font-size: var(--fs-sm);
+      font-weight: 800;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      /* Gaya Default (Tidak Aktif) untuk latar gelap */
+      background: rgba(255, 255, 255, 0.1); 
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(8px);
     }
-    .btn-ghost:hover{ background: rgba(255,255,255,0.2); transform: translateY(-2px); }
+    .nav-pill i {
+      font-size: 1.1rem;
+    }
+    .nav-pill:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateY(-2px);
+    }
+    /* Gaya State Aktif */
+    .nav-pill.active {
+      background: var(--primary-600);
+      color: #ffffff;
+      border-color: var(--primary-600);
+      box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
+    }
+    .nav-pill.active:hover {
+      background: var(--primary-700);
+    }
 
     /* --- MAIN LAYOUT --- */
     .main-content{
@@ -531,119 +543,6 @@
     .reveal.delay-1{ transition-delay:0.1s; }
     .reveal.delay-2{ transition-delay:0.2s; }
 
-    /* --- BOTTOM NAV (FLOATING DOCK) --- */
-    .bottom-nav {
-        position: fixed;
-        bottom: 24px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: calc(100% - 32px);
-        max-width: 420px;
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        border: 1px solid #1e3a8a; 
-        border-radius: 999px;
-        box-shadow: 0 10px 40px rgba(30, 58, 138, 0.15);
-        display: flex;
-        justify-content: space-around;
-        padding: 8px 12px;
-        z-index: 1050;
-        transition: all 0.3s ease;
-    }
-    .nav-item {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 4px;
-        text-decoration: none;
-        color: var(--text-tertiary); 
-        transition: all 0.3s ease;
-        border-radius: 20px;
-        padding: 4px 0;
-    }
-    .nav-icon-wrap {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 50px;
-        height: 32px;
-        border-radius: 16px;
-        transition: all 0.3s ease;
-    }
-    .nav-icon-wrap i {
-        font-size: 18px;
-        transition: transform 0.3s ease;
-    }
-    .nav-item span {
-        font-size: 11px;
-        font-weight: 800;
-        transition: color 0.3s ease;
-    }
-    .nav-item:hover .nav-icon-wrap i {
-        transform: translateY(-2px);
-    }
-    .nav-item:hover span {
-        color: var(--text-primary);
-    }
-    .nav-item.active {
-        color: var(--primary-600); 
-    }
-    .nav-item.active .nav-icon-wrap {
-        background: var(--primary-100);
-        color: var(--primary-600);
-    }
-    .nav-item.active span {
-        color: var(--primary-600);
-    }
-
-    /* RESPONSIVE DESKTOP/LAPTOP */
-    @media(min-width: 768px) {
-        .bottom-nav {
-            max-width: max-content;
-            min-width: 520px;
-            padding: 10px 24px;
-            gap: 16px;
-            bottom: 32px;
-        }
-        .nav-item {
-            flex-direction: row;
-            padding: 10px 24px;
-            gap: 12px;
-            border-radius: 999px;
-            flex: 0 1 auto;
-        }
-        .nav-item span {
-            font-size: 14px;
-            font-weight: 700;
-        }
-        .nav-icon-wrap {
-            width: auto;
-            height: auto;
-            background: transparent !important;
-        }
-        .nav-icon-wrap i {
-            font-size: 20px;
-        }
-        .nav-item:hover {
-            background: var(--primary-50);
-        }
-        .nav-item.active {
-            background: var(--primary-600);
-            color: #fff;
-            box-shadow: 0 4px 14px rgba(37,99,235,0.25);
-        }
-        .nav-item.active .nav-icon-wrap i,
-        .nav-item.active span {
-            color: #fff !important;
-        }
-        .nav-item:hover.active {
-            transform: translateY(-2px);
-        }
-    }
-
     /* --- RESPONSIVE MOBILE --- */
     @media (max-width: 1024px){
       .guide-grid{ grid-template-columns:1fr 1fr; }
@@ -665,6 +564,9 @@
 
       .guide-grid{ grid-template-columns:1fr; }
       .footer-content{ grid-template-columns:1fr; }
+      
+      .hero-nav-pills { gap: 0.5rem; }
+      .nav-pill { padding: 0.6rem 1rem; font-size: var(--fs-xs); }
     }
     </style>
 </head>
@@ -718,11 +620,18 @@
       Sistem manajemen penggunaan ruang terpadu Institut Digital Ekonomi LPKIA. Pantau ketersediaan, jadwal, dan ajukan peminjaman secara realtime.
     </p>
 
-    <div class="hero-actions reveal delay-2">
-      <a href="#jadwal-ruangan" class="btn btn-primary">
-        <i class="fa-solid fa-calendar-week"></i> Cek Jadwal
+    <div class="hero-nav-pills reveal delay-2">
+      <a href="{{ url('/') }}" class="nav-pill active">
+        <i class="fa-solid fa-house"></i> Jadwal Ruangan
+      </a>
+      <a href="{{ route('ruangan.index') }}" class="nav-pill">
+        <i class="fa-solid fa-layer-group"></i> Ajuan Peminjaman
+      </a>
+      <a href="{{ route('history.index') }}" class="nav-pill">
+        <i class="fa-solid fa-clock-rotate-left"></i>Status Pengajuan
       </a>
     </div>
+    
   </div>
 </section>
 
@@ -941,27 +850,6 @@
     <p>&copy; {{ date('Y') }} Institut Digital Ekonomi LPKIA. Hak Cipta Dilindungi.</p>
   </div>
 </footer>
-
-<nav class="bottom-nav">
-    <a href="{{ url('/') }}" class="nav-item active">
-        <div class="nav-icon-wrap">
-            <i class="fa-solid fa-house"></i>
-        </div>
-        <span>Beranda</span>
-    </a>
-    <a href="{{ route('ruangan.index') }}" class="nav-item">
-        <div class="nav-icon-wrap">
-            <i class="fa-solid fa-layer-group"></i>
-        </div>
-        <span>Ruangan</span>
-    </a>
-    <a href="{{ route('history.index') }}" class="nav-item">
-        <div class="nav-icon-wrap">
-            <i class="fa-solid fa-clock-rotate-left"></i>
-        </div>
-        <span>Pengajuan</span>
-    </a>
-</nav>
 
 <div id="scheduleModal" class="modal-overlay">
     <div class="modal-content">
