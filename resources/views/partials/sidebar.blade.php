@@ -56,7 +56,7 @@
 
       <a class="sb__item {{ $isQuick ? 'is-active' : '' }}" href="{{ route('admin.quick_booking') }}">
         <span class="sb__ico"><i class="fa-solid fa-bolt"></i></span>
-        <span class="sb__text">Booking Cepat</span>
+        <span class="sb__text">Booking Ruangan</span>
       </a>
 
       <a class="sb__item {{ $isPBM ? 'is-active' : '' }}" href="{{ route('admin.pbm.index') }}">
