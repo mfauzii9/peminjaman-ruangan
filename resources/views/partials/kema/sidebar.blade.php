@@ -5,8 +5,8 @@
   $role      = session('role', 'kemahasiswaan');
 
   $isDashboard = request()->routeIs('kema.dashboard');
-  $isPengajuan = request()->routeIs('kema.pengajuan.*') && !request()->routeIs('kema.riwayat');
-  $isRiwayat   = request()->routeIs('kema.riwayat');
+  $isRiwayat   = request()->routeIs('kema.riwayat') || request()->routeIs('kema.pengajuan.riwayat');
+  $isPengajuan = request()->routeIs('kema.pengajuan.*') && !$isRiwayat;
 @endphp
 
 <aside class="sb sidebar" aria-label="Sidebar Kemahasiswaan">
@@ -44,6 +44,12 @@
         <span class="sb__badgePremium {{ $pending > 0 ? 'is-on' : '' }}" id="sbPendingBadge" data-count="{{ $pending }}" style="{{ $pending > 0 ? '' : 'display:none' }}" title="Menunggu verifikasi">
           <span class="sbp-num">{{ $pending }}</span>
         </span>
+      </a>
+
+      {{-- TAMBAHAN MENU RIWAYAT --}}
+      <a class="sb__item {{ $isRiwayat ? 'is-active' : '' }}" href="{{ route(Route::has('kema.riwayat') ? 'kema.riwayat' : 'kema.pengajuan.riwayat') }}">
+        <span class="sb__ico"><i class="fa-solid fa-clock-rotate-left"></i></span>
+        <span class="sb__text">Riwayat Verifikasi</span>
       </a>
     </div>
   </nav>
@@ -234,7 +240,8 @@
 <script>
   window.AdminUI = window.AdminUI || (function () {
     const KEY = "sb_collapsed";
-    const SEEN_KEY = "sb_pending_seen_kema"; // Dibedakan key-nya
+    const SEEN_KEY = "sb_pending_seen_kema"; // Dibedakan key-nya untuk Kemahasiswaan
+    const LAST_POPUP_KEY = "sb_pending_last_popup_kema";
 
     function initSidebar(){
       try{
@@ -254,12 +261,125 @@
       }catch(e){}
     }
 
-    return { initSidebar, toggleSidebar };
+    function setPendingBadge(n){
+      const el = document.getElementById("sbPendingBadge");
+      if (!el) return;
+      const val = parseInt(n || 0, 10) || 0;
+
+      if (val > 0){
+        el.style.display = "";
+        const num = el.querySelector(".sbp-num");
+        if (num) num.textContent = String(val);
+        el.dataset.count = String(val);
+        el.classList.add("is-on");
+      } else {
+        el.style.display = "none";
+        el.dataset.count = "0";
+        el.classList.remove("is-on");
+      }
+    }
+
+    function ensureSwal(cb){
+      try{
+        if (window.Swal && typeof window.Swal.fire === "function") return cb();
+        const s = document.createElement("script");
+        s.src = "https://cdn.jsdelivr.net/npm/sweetalert2@11";
+        s.onload = () => cb();
+        s.onerror = () => cb();
+        document.head.appendChild(s);
+      }catch(e){ cb(); }
+    }
+
+    function maybeShowPendingPopup(){
+      const badge = document.getElementById("sbPendingBadge");
+      if (!badge) return;
+
+      const current = parseInt(badge.dataset.count || "0", 10) || 0;
+      const url = String(window.location.pathname || "");
+      const isSeeingPengajuan = url.indexOf("pengajuan") !== -1 && url.indexOf("riwayat") === -1;
+
+      try{
+        if (isSeeingPengajuan){
+          localStorage.setItem(SEEN_KEY, String(current));
+          return;
+        }
+      }catch(e){}
+
+      let seen = 0;
+      try{ seen = parseInt(localStorage.getItem(SEEN_KEY) || "0", 10) || 0; }catch(e){}
+
+      if (seen === 0 && current > 0){
+        try{ localStorage.setItem(SEEN_KEY, String(current)); }catch(e){}
+        return;
+      }
+
+      if (current > seen){
+        const diff = current - seen;
+        let lastPopupAt = 0;
+        try{ lastPopupAt = parseInt(localStorage.getItem(LAST_POPUP_KEY) || "0", 10) || 0; }catch(e){}
+        const now = Date.now();
+        
+        if (now - lastPopupAt < 1500) return;
+
+        try{ localStorage.setItem(LAST_POPUP_KEY, String(now)); }catch(e){}
+
+        ensureSwal(function(){
+          const goUrl = "{{ route('kema.pengajuan.index') }}";
+
+          if (window.Swal && typeof window.Swal.fire === "function"){
+            Swal.fire({
+              icon: "info",
+              title: "Pengajuan Masuk",
+              html: `<div style="color:#334155;font-size:14px;line-height:1.5">
+                      Ada <b>${diff}</b> pengajuan baru menunggu verifikasi Kemahasiswaan.<br>Total menunggu: <b>${current}</b>.
+                     </div>`,
+              showCancelButton: true,
+              confirmButtonText: "Buka Verifikasi",
+              cancelButtonText: "Nanti Saja",
+              confirmButtonColor: "#2563eb",
+              cancelButtonColor: "#94a3b8",
+            }).then((r)=>{
+              if (r.isConfirmed) window.location.href = goUrl;
+              try{ localStorage.setItem(SEEN_KEY, String(current)); }catch(e){}
+            });
+          } else {
+            const go = confirm(`Pengajuan masuk (${diff} baru). Total menunggu: ${current}.\nBuka halaman Verifikasi Pengajuan?`);
+            if (go) window.location.href = goUrl;
+            try{ localStorage.setItem(SEEN_KEY, String(current)); }catch(e){}
+          }
+        });
+      }
+    }
+
+    // --- FUNGSI AJAX POLLING BARU ---
+    function startPolling(){
+      // Mengecek data ke server setiap 15 detik (15000 ms)
+      setInterval(() => {
+        fetch('/kema/api/pending-count', {
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+          }
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data && typeof data.pending !== 'undefined') {
+            setPendingBadge(data.pending); // Update angka badge
+            maybeShowPendingPopup();       // Tampilkan popup jika ada yang baru
+          }
+        })
+        .catch(err => console.error("Polling Error:", err));
+      }, 1000); 
+    }
+
+    return { initSidebar, toggleSidebar, setPendingBadge, maybeShowPendingPopup, startPolling };
   })();
 
   (function(){
     const run = function(){
       try{ AdminUI.initSidebar(); }catch(e){}
+      try{ AdminUI.maybeShowPendingPopup(); }catch(e){}
+      try{ AdminUI.startPolling(); }catch(e){} // Jalankan fungsi polling saat load
     };
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", run);
     else run();

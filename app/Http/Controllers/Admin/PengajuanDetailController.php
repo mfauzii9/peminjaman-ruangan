@@ -5,11 +5,11 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Mail;
 use App\Models\BorrowRequest;
 
-use App\Notifications\BorrowApproved;
-use App\Notifications\BorrowRejected;
+// Menggunakan Mailable yang baru dibuat untuk Antrean (Queue)
+use App\Mail\EmailUntukMahasiswa;
 
 class PengajuanDetailController extends Controller
 {
@@ -26,7 +26,7 @@ class PengajuanDetailController extends Controller
 
         $data = BorrowRequest::with('room')->findOrFail($id);
 
-        // Auto hangus jika masih menunggu dan sudah lewat waktu
+        // Auto hangus jika masih menunggu namun sudah lewat waktu (end_time)
         if (($data->status ?? 'menunggu') === 'menunggu') {
             if ($data->end_time && $data->end_time < now()) {
                 $data->status = 'hangus';
@@ -39,7 +39,7 @@ class PengajuanDetailController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | APPROVE ADMIN
+    | APPROVE ADMIN (AJAX SUPPORTED)
     |--------------------------------------------------------------------------
     */
     public function approve(Request $request, $id)
@@ -48,66 +48,39 @@ class PengajuanDetailController extends Controller
 
         $req = BorrowRequest::with('room')->findOrFail($id);
 
-        // Harus sudah disetujui Kemahasiswaan
         if (($req->kema_status ?? 'menunggu') !== 'disetujui') {
-            return back()->with('err', 'Tidak bisa approve. Kemahasiswaan belum menyetujui pengajuan ini.');
+            return $this->ajaxResponse($request, false, 'Tidak bisa approve. Kemahasiswaan belum menyetujui pengajuan ini.');
         }
 
-        // Sudah disetujui sebelumnya
         if (($req->status ?? 'menunggu') === 'disetujui') {
-            return back()->with('err', 'Pengajuan sudah disetujui admin sebelumnya.');
+            return $this->ajaxResponse($request, false, 'Pengajuan sudah disetujui admin sebelumnya.');
         }
 
-        // Jika sudah lewat waktu
         if ($req->end_time && $req->end_time < now()) {
             $req->status = 'hangus';
             $req->save();
-            return back()->with('err', 'Pengajuan sudah lewat waktu (hangus).');
+            return $this->ajaxResponse($request, false, 'Pengajuan sudah lewat waktu (hangus).');
         }
 
-        // Ambil catatan admin (opsional)
         $note = trim((string) $request->input('admin_note', ''));
         $note = $note !== '' ? $note : null;
 
-        // ✅ Simpan status + admin_note
         $req->status      = 'disetujui';
         $req->approved_at = now();
-        $req->admin_note  = $note; // <-- kolom tabel admin_note
+        $req->admin_note  = $note;
         $req->save();
 
-        // ==========================
-        // ✅ KIRIM EMAIL KE MAHASISWA
-        // ==========================
+        // PERBAIKAN: Gunakan queue() agar Admin tidak loading lama
         if (!empty($req->email)) {
-
-            $roomLabel = trim(
-                ($req->room->floor ?? '-') . ' - ' . ($req->room->name ?? '-')
-            );
-
-            $startText = $req->start_time
-                ? $req->start_time->format('d M Y H:i')
-                : '-';
-
-            $endText = $req->end_time
-                ? $req->end_time->format('d M Y H:i')
-                : '-';
-
-            Notification::route('mail', $req->email)
-                ->notify(new BorrowApproved(
-                    $req->id,
-                    $roomLabel,
-                    $startText,
-                    $endText,
-                    $note
-                ));
+            Mail::to($req->email)->queue(new EmailUntukMahasiswa($req, 'status_akhir'));
         }
 
-        return back()->with('ok', 'Pengajuan disetujui oleh Admin dan email terkirim.');
+        return $this->ajaxResponse($request, true, 'Pengajuan disetujui oleh Admin.');
     }
 
     /*
     |--------------------------------------------------------------------------
-    | REJECT ADMIN
+    | REJECT ADMIN (AJAX SUPPORTED)
     |--------------------------------------------------------------------------
     */
     public function reject(Request $request, $id)
@@ -117,7 +90,7 @@ class PengajuanDetailController extends Controller
         $req = BorrowRequest::findOrFail($id);
 
         if (($req->status ?? 'menunggu') === 'disetujui') {
-            return back()->with('err', 'Pengajuan sudah disetujui admin, tidak bisa ditolak.');
+            return $this->ajaxResponse($request, false, 'Pengajuan sudah disetujui admin, tidak bisa ditolak.');
         }
 
         $note = trim((string) $request->input('admin_note', ''));
@@ -125,29 +98,35 @@ class PengajuanDetailController extends Controller
             $note = 'Ditolak oleh Admin.';
         }
 
-        // ✅ Simpan status + admin_note
         $req->status = 'ditolak';
-        $req->admin_note = $note; // <-- kolom tabel admin_note
+        $req->admin_note = $note;
         $req->save();
 
-        // ==========================
-        // ✅ EMAIL KE MAHASISWA
-        // ==========================
+        // PERBAIKAN: Gunakan queue() agar Admin tidak loading lama
         if (!empty($req->email)) {
-            Notification::route('mail', $req->email)
-                ->notify(new BorrowRejected($req->id, $note));
+            Mail::to($req->email)->queue(new EmailUntukMahasiswa($req, 'status_akhir'));
         }
 
-        return back()->with('ok', 'Pengajuan ditolak oleh Admin.');
+        return $this->ajaxResponse($request, true, 'Pengajuan berhasil ditolak oleh Admin.');
     }
 
     /*
     |--------------------------------------------------------------------------
-    | SET TIMEZONE DATABASE
+    | HELPER
     |--------------------------------------------------------------------------
     */
     private function setDbTimezone()
     {
         DB::statement("SET time_zone = '{$this->tz}'");
+    }
+
+    private function ajaxResponse($request, $success, $message)
+    {
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['success' => $success, 'message' => $message]);
+        }
+
+        // Fallback jika tidak menggunakan AJAX
+        return $success ? back()->with('ok', $message) : back()->with('err', $message);
     }
 }

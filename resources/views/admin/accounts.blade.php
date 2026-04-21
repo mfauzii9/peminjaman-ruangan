@@ -575,6 +575,28 @@
       word-break:break-word;
     }
 
+    /* === CSS TAMBAHAN UNTUK TOGGLE PASSWORD === */
+    .pwd-wrap {
+      position: relative;
+      width: 100%;
+    }
+    .pwd-wrap input.swal2-input {
+      padding-right: 40px !important;
+    }
+    .pwd-toggle {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 13px;
+      z-index: 10;
+    }
+    .pwd-toggle:hover {
+      color: var(--accent);
+    }
+
     @media (max-width: 820px){
       .app{ flex-direction:column; }
       .main-top{ position:relative; }
@@ -813,6 +835,20 @@
         if (dd) dd.classList.remove('show');
       }
 
+      /* === FUNGSI TAMBAHAN UNTUK TOGGLE MATA PASSWORD === */
+      function togglePwd(inputId, iconEl) {
+        const inp = document.getElementById(inputId);
+        if(inp.type === 'password') {
+          inp.type = 'text';
+          iconEl.classList.remove('fa-eye');
+          iconEl.classList.add('fa-eye-slash');
+        } else {
+          inp.type = 'password';
+          iconEl.classList.remove('fa-eye-slash');
+          iconEl.classList.add('fa-eye');
+        }
+      }
+
       function viewProfile(){
         closeProfileMenu();
 
@@ -869,7 +905,10 @@
                 <input id="sw_me_username" class="swal2-input" value="${me.username ?? ''}" placeholder="username" style="margin:0; width:100%;">
 
                 <label class="sw-label">Password Baru (opsional)</label>
-                <input id="sw_me_password" type="password" class="swal2-input" placeholder="Kosongkan jika tidak diubah" style="margin:0; width:100%;">
+                <div class="pwd-wrap">
+                  <input id="sw_me_password" type="password" class="swal2-input" placeholder="Kosongkan jika tidak diubah" style="margin:0; width:100%;">
+                  <i class="fa-solid fa-eye pwd-toggle" onclick="AccUI.togglePwd('sw_me_password', this)"></i>
+                </div>
               </div>
             `,
             showCancelButton: true,
@@ -918,7 +957,10 @@
                 <input id="sw_username" class="swal2-input" placeholder="username" style="margin:0; width:100%;">
 
                 <label class="sw-label">Password</label>
-                <input id="sw_password" type="password" class="swal2-input" placeholder="password" style="margin:0; width:100%;">
+                <div class="pwd-wrap">
+                  <input id="sw_password" type="password" class="swal2-input" placeholder="password" style="margin:0; width:100%;">
+                  <i class="fa-solid fa-eye pwd-toggle" onclick="AccUI.togglePwd('sw_password', this)"></i>
+                </div>
 
                 <label class="sw-label">Role</label>
                 <select id="sw_role" class="swal2-select" style="width:100%; margin-top:0;">
@@ -977,7 +1019,10 @@
                   <input id="sw_username" class="swal2-input" value="${user.username ?? ''}" style="margin:0; width:100%;">
 
                   <label class="sw-label">Password Baru (opsional)</label>
-                  <input id="sw_password" type="password" class="swal2-input" placeholder="kosongkan jika tidak diubah" style="margin:0; width:100%;">
+                  <div class="pwd-wrap">
+                    <input id="sw_password" type="password" class="swal2-input" placeholder="kosongkan jika tidak diubah" style="margin:0; width:100%;">
+                    <i class="fa-solid fa-eye pwd-toggle" onclick="AccUI.togglePwd('sw_password', this)"></i>
+                  </div>
 
                   <label class="sw-label">Role</label>
                   <select id="sw_role" class="swal2-select" style="width:100%; margin-top:0;">
@@ -1116,7 +1161,8 @@
         editUser,
         deleteUser,
         viewProfile,
-        editMyProfile
+        editMyProfile,
+        togglePwd
       };
     })();
 

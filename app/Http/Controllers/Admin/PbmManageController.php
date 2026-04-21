@@ -12,6 +12,18 @@ class PbmManageController extends Controller
     public function index()
     {
         DB::statement("SET time_zone = '+07:00'");
+        
+        // EKSEKUSI PERBAIKAN DATABASE OTOMATIS DARI KODE
+        try {
+            // 1. Ubah kolom status ENUM untuk menghapus yang tidak terpakai dan menambahkan 'rescheduled'
+            DB::statement("ALTER TABLE pbm_occurrences MODIFY COLUMN status ENUM('draft', 'approved', 'cancelled', 'rescheduled') NOT NULL DEFAULT 'draft'");
+            
+            // 2. Hapus Index Unik (uniq_pbm_date) agar satu mata kuliah bisa punya jadwal ganda di hari yang sama (jadwal rutin + jadwal tamu/pindahan)
+            DB::statement("ALTER TABLE pbm_occurrences DROP INDEX uniq_pbm_date");
+        } catch (\Throwable $e) {
+            // Jika struktur sudah berhasil diubah sebelumnya, abaikan error ini
+        }
+
         return view('admin.pbm.index');
     }
 
@@ -49,20 +61,9 @@ class PbmManageController extends Controller
             $query = DB::table('pbm_templates as p')
                 ->join('rooms as r', 'r.id', '=', 'p.room_id')
                 ->select(
-                    'p.id',
-                    'p.room_id',
-                    'p.hari',
-                    'p.start_time',
-                    'p.end_time',
-                    'p.mata_kuliah',
-                    'p.kelas',
-                    'p.dosen',
-                    'p.semester',
-                    'p.aktif',
-                    'p.created_at',
-                    'p.updated_at',
-                    'r.name as room_name',
-                    'r.floor as room_floor'
+                    'p.id', 'p.room_id', 'p.hari', 'p.start_time', 'p.end_time',
+                    'p.mata_kuliah', 'p.kelas', 'p.dosen', 'p.semester', 'p.aktif',
+                    'p.created_at', 'p.updated_at', 'r.name as room_name', 'r.floor as room_floor'
                 );
 
             if ($request->filled('room_id')) {
@@ -85,26 +86,13 @@ class PbmManageController extends Controller
             }
 
             $items = $query
-                ->orderByRaw("
-                    FIELD(LOWER(p.hari),
-                    'senin','selasa','rabu','kamis','jumat','sabtu','minggu')
-                ")
-                ->orderBy('p.room_id')
-                ->orderBy('p.start_time')
-                ->orderBy('p.id')
-                ->get();
+                ->orderByRaw("FIELD(LOWER(p.hari), 'senin','selasa','rabu','kamis','jumat','sabtu','minggu')")
+                ->orderBy('p.room_id')->orderBy('p.start_time')->orderBy('p.id')->get();
 
-            return response()->json(array(
-                'ok' => true,
-                'items' => $items,
-            ));
+            return response()->json(array('ok' => true, 'items' => $items));
         } catch (\Throwable $e) {
             Log::error('PBM templates error: ' . $e->getMessage());
-
-            return response()->json(array(
-                'ok' => false,
-                'message' => 'Gagal memuat template',
-            ), 500);
+            return response()->json(array('ok' => false, 'message' => 'Gagal memuat template'), 500);
         }
     }
 
@@ -112,25 +100,12 @@ class PbmManageController extends Controller
     {
         try {
             $item = DB::table('pbm_templates')->where('id', (int) $id)->first();
-
             if (!$item) {
-                return response()->json(array(
-                    'ok' => false,
-                    'message' => 'Template tidak ditemukan',
-                ), 404);
+                return response()->json(array('ok' => false, 'message' => 'Template tidak ditemukan'), 404);
             }
-
-            return response()->json(array(
-                'ok' => true,
-                'item' => $item,
-            ));
+            return response()->json(array('ok' => true, 'item' => $item));
         } catch (\Throwable $e) {
-            Log::error('PBM template get error: ' . $e->getMessage());
-
-            return response()->json(array(
-                'ok' => false,
-                'message' => 'Gagal memuat template',
-            ), 500);
+            return response()->json(array('ok' => false, 'message' => 'Gagal memuat template'), 500);
         }
     }
 
@@ -146,50 +121,28 @@ class PbmManageController extends Controller
             $endNorm   = $this->normalizeTime($request->input('end_time'));
             $aktif     = (int) $request->input('aktif', 1);
 
-            if (!$roomId) {
+            if (!$roomId || !$startNorm || !$endNorm) {
                 DB::rollBack();
-                return response()->json(array(
-                    'ok' => false,
-                    'message' => 'Ruangan wajib dipilih',
-                ));
+                return response()->json(array('ok' => false, 'message' => 'Data jadwal tidak lengkap'));
             }
 
             if (!in_array($hari, array('senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu', 'minggu'), true)) {
                 DB::rollBack();
-                return response()->json(array(
-                    'ok' => false,
-                    'message' => 'Hari tidak valid',
-                ));
-            }
-
-            if (!$startNorm || !$endNorm) {
-                DB::rollBack();
-                return response()->json(array(
-                    'ok' => false,
-                    'message' => 'Format jam harus HH:MM atau HH:MM:SS',
-                ));
+                return response()->json(array('ok' => false, 'message' => 'Hari tidak valid'));
             }
 
             if (strtotime($endNorm) <= strtotime($startNorm)) {
                 DB::rollBack();
-                return response()->json(array(
-                    'ok' => false,
-                    'message' => 'Jam selesai harus setelah jam mulai',
-                ));
+                return response()->json(array('ok' => false, 'message' => 'Jam selesai harus setelah jam mulai'));
             }
 
-            // === CEK BENTROK JADWAL RUTIN (TEMPLATE) ===
+            // CEK BENTROK TEMPLATE
             if ($this->checkTemplateConflict($roomId, $hari, $startNorm, $endNorm, $id)) {
                 DB::rollBack();
-                return response()->json(array(
-                    'ok' => false,
-                    'message' => 'Bentrok! Sudah ada jadwal PBM rutin lain di ruangan dan jam tersebut pada hari ' . ucfirst($hari)
-                ));
+                return response()->json(array('ok' => false, 'message' => 'Bentrok! Sudah ada jadwal PBM rutin lain di jam ini'));
             }
 
-            if ($aktif !== 0 && $aktif !== 1) {
-                $aktif = 1;
-            }
+            $aktif = ($aktif !== 0) ? 1 : 0;
 
             $data = array(
                 'room_id'     => $roomId,
@@ -203,72 +156,33 @@ class PbmManageController extends Controller
                 'aktif'       => $aktif,
             );
 
-            // UPDATE TEMPLATE LAMA
             if ($id > 0) {
                 $data['updated_at'] = now();
-
-                DB::table('pbm_templates')
-                    ->where('id', $id)
-                    ->update($data);
-
+                DB::table('pbm_templates')->where('id', $id)->update($data);
                 DB::commit();
-
-                return response()->json(array(
-                    'ok' => true,
-                    'message' => 'Template berhasil diupdate',
-                ));
+                return response()->json(array('ok' => true, 'message' => 'Template berhasil diupdate'));
             }
 
-            // Cek jika slot persis sama ada (untuk fallback update)
             $existing = DB::table('pbm_templates')
-                ->where('room_id', $roomId)
-                ->whereRaw('LOWER(hari) = ?', array($hari))
-                ->where('start_time', $startNorm)
-                ->where('end_time', $endNorm)
-                ->first();
+                ->where('room_id', $roomId)->whereRaw('LOWER(hari) = ?', array($hari))
+                ->where('start_time', $startNorm)->where('end_time', $endNorm)->first();
 
             if ($existing) {
-                DB::table('pbm_templates')
-                    ->where('id', $existing->id)
-                    ->update(array(
-                        'mata_kuliah' => $data['mata_kuliah'],
-                        'kelas'       => $data['kelas'],
-                        'dosen'       => $data['dosen'],
-                        'semester'    => $data['semester'],
-                        'aktif'       => $data['aktif'],
-                        'updated_at'  => now(),
-                    ));
-
+                $data['updated_at'] = now();
+                DB::table('pbm_templates')->where('id', $existing->id)->update($data);
                 DB::commit();
-
-                return response()->json(array(
-                    'ok' => true,
-                    'message' => 'Template slot sama berhasil diupdate',
-                    'id' => (int) $existing->id,
-                ));
+                return response()->json(array('ok' => true, 'message' => 'Template slot sama berhasil diupdate', 'id' => (int) $existing->id));
             }
 
-            // INSERT TEMPLATE BARU
             $data['created_at'] = now();
-            $data['updated_at'] = null;
-
             $newId = DB::table('pbm_templates')->insertGetId($data);
 
             DB::commit();
-
-            return response()->json(array(
-                'ok' => true,
-                'message' => 'Template berhasil ditambahkan',
-                'id' => (int) $newId,
-            ));
+            return response()->json(array('ok' => true, 'message' => 'Template berhasil ditambahkan', 'id' => (int) $newId));
         } catch (\Throwable $e) {
             DB::rollBack();
             Log::error('PBM template save error: ' . $e->getMessage());
-
-            return response()->json(array(
-                'ok' => false,
-                'message' => 'Gagal menyimpan template: ' . $e->getMessage(),
-            ), 500);
+            return response()->json(array('ok' => false, 'message' => 'Gagal menyimpan template: ' . $e->getMessage()), 500);
         }
     }
 
@@ -276,40 +190,13 @@ class PbmManageController extends Controller
     {
         try {
             DB::beginTransaction();
-
-            $id = (int) $id;
-            $template = DB::table('pbm_templates')->where('id', $id)->first();
-
-            if (!$template) {
-                DB::rollBack();
-                return response()->json(array(
-                    'ok' => false,
-                    'message' => 'Template tidak ditemukan',
-                ), 404);
-            }
-
-            DB::table('pbm_occurrences')
-                ->where('pbm_id', $id)
-                ->delete();
-
-            DB::table('pbm_templates')
-                ->where('id', $id)
-                ->delete();
-
+            DB::table('pbm_occurrences')->where('pbm_id', $id)->delete();
+            DB::table('pbm_templates')->where('id', $id)->delete();
             DB::commit();
-
-            return response()->json(array(
-                'ok' => true,
-                'message' => 'Template berhasil dihapus',
-            ));
+            return response()->json(array('ok' => true, 'message' => 'Template berhasil dihapus'));
         } catch (\Throwable $e) {
             DB::rollBack();
-            Log::error('PBM template delete error: ' . $e->getMessage());
-
-            return response()->json(array(
-                'ok' => false,
-                'message' => 'Gagal menghapus template',
-            ), 500);
+            return response()->json(array('ok' => false, 'message' => 'Gagal menghapus template'), 500);
         }
     }
 
@@ -317,26 +204,15 @@ class PbmManageController extends Controller
     {
         try {
             DB::beginTransaction();
-
             DB::statement('SET FOREIGN_KEY_CHECKS=0');
             DB::table('pbm_occurrences')->truncate();
             DB::table('pbm_templates')->truncate();
             DB::statement('SET FOREIGN_KEY_CHECKS=1');
-
             DB::commit();
-
-            return response()->json(array(
-                'ok' => true,
-                'message' => 'Semua template dan occurrence PBM berhasil dihapus',
-            ));
+            return response()->json(array('ok' => true, 'message' => 'Semua template dan occurrence PBM berhasil dihapus'));
         } catch (\Throwable $e) {
             DB::rollBack();
-            Log::error('PBM template delete all error: ' . $e->getMessage());
-
-            return response()->json(array(
-                'ok' => false,
-                'message' => 'Gagal hapus semua template: ' . $e->getMessage(),
-            ), 500);
+            return response()->json(array('ok' => false, 'message' => 'Gagal hapus semua template'), 500);
         }
     }
 
@@ -348,25 +224,35 @@ class PbmManageController extends Controller
     public function events(Request $request)
     {
         try {
-            $date = trim((string) $request->input('date'));
-            $hari = strtolower(trim((string) $request->input('hari')));
+            $date      = trim((string) $request->input('date'));
+            $hari      = strtolower(trim((string) $request->input('hari')));
+            $month     = trim((string) $request->input('month'));
+            $startDate = trim((string) $request->input('start_date'));
+            $endDate   = trim((string) $request->input('end_date'));
 
             $allowedHari = array('senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu', 'minggu');
 
-            if ($date !== '') {
-                if (!$this->isValidDate($date)) {
-                    return response()->json(array(
-                        'ok' => false,
-                        'message' => 'Tanggal tidak valid',
-                    ));
-                }
-
-                $this->ensureOccurrencesForDate($date);
-            } elseif ($hari !== '' && in_array($hari, $allowedHari, true)) {
-                $this->ensureOccurrencesForDayName($hari);
+            if ($startDate !== '' && $endDate !== '') {
+                $genStart = $startDate; $genEnd = $endDate;
+            } elseif ($month !== '') {
+                $genStart = $month . '-01'; $genEnd = date('Y-m-t', strtotime($genStart));
+            } elseif ($date !== '') {
+                $genStart = $date; $genEnd = $date;
             } else {
-                foreach ($allowedHari as $hariLoop) {
-                    $this->ensureOccurrencesForDayName($hariLoop);
+                $genStart = date('Y-m-01'); $genEnd = date('Y-m-t');
+            }
+
+            if ($this->isValidDate($genStart) && $this->isValidDate($genEnd)) {
+                $curr = $genStart;
+                while (strtotime($curr) <= strtotime($genEnd)) {
+                    if ($hari !== '' && in_array($hari, $allowedHari, true)) {
+                        if ($this->dayNameFromDate($curr) !== $hari) {
+                            $curr = date('Y-m-d', strtotime($curr . ' +1 day'));
+                            continue;
+                        }
+                    }
+                    $this->ensureOccurrencesForDate($curr);
+                    $curr = date('Y-m-d', strtotime($curr . ' +1 day'));
                 }
             }
 
@@ -374,18 +260,9 @@ class PbmManageController extends Controller
                 ->leftJoin('pbm_templates as p', 'p.id', '=', 'o.pbm_id')
                 ->join('rooms as r', 'r.id', '=', 'o.room_id')
                 ->select(
-                    'o.id',
-                    'o.pbm_id',
-                    'o.room_id',
-                    'o.occ_date',
-                    'o.start_time',
-                    'o.end_time',
-                    'o.status',
-                    'o.approved_by',
-                    'o.approved_at',
-                    'o.created_at',
-                    'r.name as room_name',
-                    'r.floor as room_floor',
+                    'o.id', 'o.pbm_id', 'o.room_id', 'o.occ_date', 'o.start_time', 'o.end_time', 'o.status',
+                    'o.approved_by', 'o.approved_at', 'o.created_at',
+                    'r.name as room_name', 'r.floor as room_floor',
                     DB::raw("COALESCE(p.hari, '') as hari_template"),
                     DB::raw("COALESCE(p.mata_kuliah, '-') as mata_kuliah"),
                     DB::raw("COALESCE(p.kelas, '-') as kelas"),
@@ -393,16 +270,25 @@ class PbmManageController extends Controller
                     DB::raw("COALESCE(p.semester, '-') as semester")
                 );
 
-            if ($date !== '') {
+            if ($startDate !== '' && $endDate !== '') {
+                $query->whereBetween('o.occ_date', [$startDate, $endDate]);
+            } elseif ($month !== '') {
+                $query->whereBetween('o.occ_date', [$month . '-01', date('Y-m-t', strtotime($month . '-01'))]);
+            } elseif ($date !== '') {
                 $query->whereDate('o.occ_date', $date);
-            } elseif ($hari !== '' && in_array($hari, $allowedHari, true)) {
+            } else {
+                $query->whereBetween('o.occ_date', [date('Y-m-01'), date('Y-m-t')]);
+            }
+
+            if ($hari !== '' && in_array($hari, $allowedHari, true)) {
                 $query->whereRaw("LOWER(DAYNAME(o.occ_date)) = ?", array($this->englishDayNameFromIndo($hari)));
             }
 
+            // HANYA TAMPILKAN approved, rescheduled, dan draft (SEMBUNYIKAN cancelled)
             if ($request->filled('status') && $request->input('status') !== 'all') {
                 $query->where('o.status', $request->input('status'));
             } else {
-                $query->whereIn('o.status', array('approved'));
+                $query->whereIn('o.status', array('approved', 'rescheduled', 'draft'));
             }
 
             if ($request->filled('room_id')) {
@@ -415,65 +301,35 @@ class PbmManageController extends Controller
                     $q->where('p.mata_kuliah', 'like', $search)
                         ->orWhere('p.kelas', 'like', $search)
                         ->orWhere('p.dosen', 'like', $search)
-                        ->orWhere('p.semester', 'like', $search)
                         ->orWhere('r.name', 'like', $search);
                 });
             }
 
-            $items = $query
-                ->orderByRaw("
-                    FIELD(
-                        LOWER(
-                            CASE DAYNAME(o.occ_date)
-                                WHEN 'Monday' THEN 'senin'
-                                WHEN 'Tuesday' THEN 'selasa'
-                                WHEN 'Wednesday' THEN 'rabu'
-                                WHEN 'Thursday' THEN 'kamis'
-                                WHEN 'Friday' THEN 'jumat'
-                                WHEN 'Saturday' THEN 'sabtu'
-                                WHEN 'Sunday' THEN 'minggu'
-                                ELSE ''
-                            END
-                        ),
-                        'senin','selasa','rabu','kamis','jumat','sabtu','minggu'
-                    )
-                ")
-                ->orderBy('o.occ_date')
-                ->orderBy('o.start_time')
-                ->orderBy('o.room_id')
-                ->orderBy('o.id')
-                ->get();
+            $items = $query->orderBy('o.occ_date')->orderBy('o.start_time')->orderBy('o.room_id')->get();
+
+            // DINAMIS: UBAH KE RIWAYAT JIKA JAM MULAI SUDAH LEWAT
+            $now = date('Y-m-d H:i:s');
+            foreach ($items as $item) {
+                if (in_array($item->status, ['approved', 'rescheduled']) && $item->start_time <= $now) {
+                    $item->status = 'riwayat';
+                }
+            }
 
             $grouped = array(
-                'senin'  => array(),
-                'selasa' => array(),
-                'rabu'   => array(),
-                'kamis'  => array(),
-                'jumat'  => array(),
-                'sabtu'  => array(),
-                'minggu' => array(),
+                'senin' => array(), 'selasa' => array(), 'rabu' => array(),
+                'kamis' => array(), 'jumat' => array(), 'sabtu' => array(), 'minggu' => array()
             );
 
             foreach ($items as $item) {
                 $hariItem = $this->dayNameFromDate($item->occ_date);
-                if (!isset($grouped[$hariItem])) {
-                    $grouped[$hariItem] = array();
-                }
+                if (!isset($grouped[$hariItem])) $grouped[$hariItem] = array();
                 $grouped[$hariItem][] = $item;
             }
 
-            return response()->json(array(
-                'ok'     => true,
-                'items'  => $items,
-                'groups' => $grouped,
-            ));
+            return response()->json(array('ok' => true, 'items' => $items, 'groups' => $grouped));
         } catch (\Throwable $e) {
             Log::error('PBM events error: ' . $e->getMessage());
-
-            return response()->json(array(
-                'ok' => false,
-                'message' => 'Gagal memuat jadwal PBM: ' . $e->getMessage(),
-            ), 500);
+            return response()->json(array('ok' => false, 'message' => 'Gagal memuat jadwal PBM'), 500);
         }
     }
 
@@ -487,18 +343,12 @@ class PbmManageController extends Controller
 
             if (!$old) {
                 DB::rollBack();
-                return response()->json(array(
-                    'ok' => false,
-                    'message' => 'Jadwal asal tidak ditemukan',
-                ), 404);
+                return response()->json(array('ok' => false, 'message' => 'Jadwal asal tidak ditemukan'), 404);
             }
 
-            if (!in_array($old->status, array('approved', 'draft'), true)) {
+            if (!in_array($old->status, array('approved', 'draft', 'rescheduled'), true)) {
                 DB::rollBack();
-                return response()->json(array(
-                    'ok' => false,
-                    'message' => 'Jadwal ini tidak bisa dipindahkan',
-                ));
+                return response()->json(array('ok' => false, 'message' => 'Jadwal ini tidak bisa dipindahkan karena sudah riwayat.'));
             }
 
             $newDate    = trim((string) $request->input('date'));
@@ -508,29 +358,18 @@ class PbmManageController extends Controller
 
             if (!$newDate || !$this->isValidDate($newDate)) {
                 DB::rollBack();
-                return response()->json(array(
-                    'ok' => false,
-                    'message' => 'Tanggal baru tidak valid',
-                ));
+                return response()->json(array('ok' => false, 'message' => 'Tanggal baru tidak valid'));
             }
-
             if (!$newRoomId) {
                 DB::rollBack();
-                return response()->json(array(
-                    'ok' => false,
-                    'message' => 'Ruangan baru wajib dipilih',
-                ));
+                return response()->json(array('ok' => false, 'message' => 'Ruangan baru wajib dipilih'));
             }
-
             $newStart = $this->normalizeHm($newStartHm);
             $newEnd   = $this->normalizeHm($newEndHm);
-
+            
             if (!$newStart || !$newEnd) {
                 DB::rollBack();
-                return response()->json(array(
-                    'ok' => false,
-                    'message' => 'Format jam harus HH:MM',
-                ));
+                return response()->json(array('ok' => false, 'message' => 'Format jam harus HH:MM'));
             }
 
             $newStartDateTime = $newDate . ' ' . $newStart . ':00';
@@ -538,84 +377,75 @@ class PbmManageController extends Controller
 
             if (strtotime($newEndDateTime) <= strtotime($newStartDateTime)) {
                 DB::rollBack();
-                return response()->json(array(
-                    'ok' => false,
-                    'message' => 'Jam selesai harus setelah jam mulai',
-                ));
+                return response()->json(array('ok' => false, 'message' => 'Jam selesai harus setelah jam mulai'));
             }
 
-            // === CEK BENTROK ===
-            $conflict = $this->getConflictSummary(
-                $newRoomId,
-                $newDate,
-                $newStartDateTime,
-                $newEndDateTime,
-                (int) $id,
-                (int) $old->pbm_id
-            );
-
+            // CEK BENTROK KE JADWAL LAIN DI RUANGAN DAN JAM YANG SAMA
+            $conflict = $this->getConflictSummary($newRoomId, $newDate, $newStartDateTime, $newEndDateTime, (int) $id, null);
             if ($conflict['has_conflict']) {
                 DB::rollBack();
-                return response()->json(array(
-                    'ok' => false,
-                    'message' => 'Gagal pindah jadwal! ' . $conflict['message'],
-                    'conflicts' => $conflict['sources'],
+                return response()->json(array('ok' => false, 'message' => 'Gagal pindah! ' . $conflict['message']));
+            }
+
+            if ($old->occ_date === $newDate) {
+                // PERBAIKAN 1: Pindah di hari yg sama, cukup ubah jam/ruangan, tapi JANGAN ubah flag 'is_rescheduled'
+                DB::table('pbm_occurrences')
+                    ->where('id', (int) $id)
+                    ->update(array(
+                        'room_id'    => $newRoomId,
+                        'start_time' => $newStartDateTime,
+                        'end_time'   => $newEndDateTime,
+                        'status'     => 'rescheduled'
+                    ));
+            } else {
+                // PERBAIKAN 2: Pindah ke HARI LAIN. Gunakan fitur is_rescheduled agar hari tujuannya tahu ini jadwal tamu.
+                // 1. Matikan (cancel) jadwal di hari asal agar HILANG dari tampilan hari itu
+                DB::table('pbm_occurrences')
+                    ->where('id', (int) $id)
+                    ->update(array(
+                        'status' => 'cancelled',
+                        'reschedule_note' => 'Dipindah ke ' . $newDate . ' ' . $newStart
+                    ));
+
+                // 2. Buat jadwal baru di hari tujuan dan set is_rescheduled = 1
+                DB::table('pbm_occurrences')->insert(array(
+                    'pbm_id'               => $old->pbm_id,
+                    'source_occurrence_id' => $id, // Simpan riwayat ID asal
+                    'is_rescheduled'       => 1,   // Tanda mutlak ini adalah jadwal tamu
+                    'room_id'              => $newRoomId,
+                    'occ_date'             => $newDate,
+                    'start_time'           => $newStartDateTime,
+                    'end_time'             => $newEndDateTime,
+                    'status'               => 'rescheduled',
+                    'approved_at'          => now(),
+                    'created_at'           => now(),
                 ));
             }
 
-            DB::table('pbm_occurrences')
-                ->where('id', (int) $id)
-                ->update(array(
-                    'status' => 'cancelled',
-                ));
-
-            DB::table('pbm_occurrences')->insert(array(
-                'pbm_id'      => $old->pbm_id,
-                'room_id'     => $newRoomId,
-                'occ_date'    => $newDate,
-                'start_time'  => $newStartDateTime,
-                'end_time'    => $newEndDateTime,
-                'status'      => 'approved',
-                'approved_by' => null,
-                'approved_at' => now(),
-                'created_at'  => now(),
-            ));
-
             DB::commit();
-
-            return response()->json(array(
-                'ok' => true,
-                'message' => 'Jadwal berhasil dipindahkan.',
-            ));
+            return response()->json(array('ok' => true, 'message' => 'Jadwal berhasil dipindahkan.'));
         } catch (\Throwable $e) {
             DB::rollBack();
             Log::error('PBM reschedule error: ' . $e->getMessage());
-
-            return response()->json(array(
-                'ok' => false,
-                'message' => 'Gagal memindahkan jadwal: ' . $e->getMessage(),
-            ), 500);
+            return response()->json(array('ok' => false, 'message' => 'Gagal memindahkan jadwal: ' . $e->getMessage()), 500);
         }
     }
 
     public function eventDelete($id)
     {
         try {
-            $deleted = DB::table('pbm_occurrences')
+            // Ubah jadi cancelled agar disembunyikan
+            $updated = DB::table('pbm_occurrences')
                 ->where('id', (int) $id)
-                ->delete();
+                ->update(['status' => 'cancelled']);
 
             return response()->json(array(
-                'ok' => (bool) $deleted,
-                'message' => $deleted ? 'Occurrence berhasil dihapus' : 'Occurrence tidak ditemukan',
+                'ok' => (bool) $updated,
+                'message' => $updated ? 'Jadwal berhasil disembunyikan' : 'Jadwal tidak ditemukan',
             ));
         } catch (\Throwable $e) {
             Log::error('PBM event delete error: ' . $e->getMessage());
-
-            return response()->json(array(
-                'ok' => false,
-                'message' => 'Gagal menghapus jadwal',
-            ), 500);
+            return response()->json(array('ok' => false, 'message' => 'Gagal menyembunyikan jadwal'), 500);
         }
     }
 
@@ -629,36 +459,24 @@ class PbmManageController extends Controller
             $query = DB::table('pbm_occurrences');
 
             if ($date !== '') {
-                if (!$this->isValidDate($date)) {
-                    return response()->json(array(
-                        'ok' => false,
-                        'message' => 'Tanggal tidak valid',
-                    ));
-                }
+                if (!$this->isValidDate($date)) return response()->json(array('ok' => false, 'message' => 'Tanggal tidak valid'));
                 $query->whereDate('occ_date', $date);
             } elseif ($hari !== '' && in_array($hari, $allowedHari, true)) {
                 $query->whereRaw("LOWER(DAYNAME(occ_date)) = ?", array($this->englishDayNameFromIndo($hari)));
             } else {
-                return response()->json(array(
-                    'ok' => false,
-                    'message' => 'Isi tanggal atau hari terlebih dahulu',
-                ));
+                return response()->json(array('ok' => false, 'message' => 'Isi tanggal atau hari terlebih dahulu'));
             }
 
-            $deleted = $query->delete();
+            $updated = $query->update(['status' => 'cancelled']);
 
             return response()->json(array(
                 'ok' => true,
-                'deleted' => (int) $deleted,
-                'message' => 'Berhasil hapus occurrence PBM',
+                'deleted' => (int) $updated,
+                'message' => 'Semua jadwal PBM pada waktu terpilih berhasil dibatalkan',
             ));
         } catch (\Throwable $e) {
             Log::error('PBM delete all events error: ' . $e->getMessage());
-
-            return response()->json(array(
-                'ok' => false,
-                'message' => 'Gagal hapus semua jadwal',
-            ), 500);
+            return response()->json(array('ok' => false, 'message' => 'Gagal membatalkan semua jadwal'), 500);
         }
     }
 
@@ -671,13 +489,8 @@ class PbmManageController extends Controller
     {
         try {
             $path = base_path('public/assets/pbm_templates_sample.csv');
-
             if (file_exists($path)) {
-                return response()->download(
-                    $path,
-                    'pbm_templates_sample.csv',
-                    array('Content-Type' => 'text/csv; charset=UTF-8')
-                );
+                return response()->download($path, 'pbm_templates_sample.csv', array('Content-Type' => 'text/csv; charset=UTF-8'));
             }
 
             $sample = "room_id,hari,start_time,end_time,mata_kuliah,kelas,dosen,semester,aktif\n";
@@ -690,59 +503,31 @@ class PbmManageController extends Controller
                 'Content-Disposition' => 'attachment; filename="pbm_templates_sample.csv"',
             ));
         } catch (\Throwable $e) {
-            Log::error('PBM sample CSV error: ' . $e->getMessage());
-
-            return response()->json(array(
-                'ok' => false,
-                'message' => 'Gagal download sample CSV',
-            ), 500);
+            return response()->json(array('ok' => false, 'message' => 'Gagal download sample CSV'), 500);
         }
     }
 
     public function templatesImportCsv(Request $request)
     {
         try {
-            $request->validate(array(
-                'file' => array('required', 'file', 'mimes:csv,txt', 'max:8192'),
-            ));
-
+            $request->validate(array('file' => array('required', 'file', 'mimes:csv,txt', 'max:8192')));
             $deleteAllFirst = ((int) $request->input('delete_all_first', 0) === 1);
 
             $fh = fopen($request->file('file')->getRealPath(), 'r');
-            if (!$fh) {
-                return response()->json(array(
-                    'ok' => false,
-                    'message' => 'Tidak bisa membaca file CSV',
-                ), 200);
-            }
+            if (!$fh) return response()->json(array('ok' => false, 'message' => 'Tidak bisa membaca file CSV'), 200);
 
             $firstLine = fgets($fh);
-            if ($firstLine === false) {
-                fclose($fh);
-                return response()->json(array(
-                    'ok' => false,
-                    'message' => 'CSV kosong',
-                ), 200);
-            }
+            if ($firstLine === false) { fclose($fh); return response()->json(array('ok' => false, 'message' => 'CSV kosong'), 200); }
 
             $firstLine = preg_replace('/^\xEF\xBB\xBF/', '', $firstLine);
             $delimiter = (substr_count($firstLine, ';') > substr_count($firstLine, ',')) ? ';' : ',';
             rewind($fh);
 
             $header = fgetcsv($fh, 0, $delimiter);
-            if (!$header) {
-                fclose($fh);
-                return response()->json(array(
-                    'ok' => false,
-                    'message' => 'Header CSV tidak valid',
-                ), 200);
-            }
+            if (!$header) { fclose($fh); return response()->json(array('ok' => false, 'message' => 'Header CSV tidak valid'), 200); }
 
             $header = array_map(function ($h) {
-                $h = strtolower(trim((string) $h));
-                $h = preg_replace('/^\xEF\xBB\xBF/', '', $h);
-                $h = str_replace(' ', '_', $h);
-                return $h;
+                return str_replace(' ', '_', preg_replace('/^\xEF\xBB\xBF/', '', strtolower(trim((string) $h))));
             }, $header);
 
             $idx = function ($key) use ($header) {
@@ -753,41 +538,19 @@ class PbmManageController extends Controller
             $required = array('room_id', 'hari', 'start_time', 'end_time', 'mata_kuliah', 'kelas', 'dosen', 'semester', 'aktif');
             foreach ($required as $r) {
                 if ($idx($r) === false) {
-                    fclose($fh);
-                    return response()->json(array(
-                        'ok' => false,
-                        'message' => 'Kolom wajib tidak ada: ' . $r,
-                    ), 200);
+                    fclose($fh); return response()->json(array('ok' => false, 'message' => 'Kolom wajib tidak ada: ' . $r), 200);
                 }
             }
 
-            $iRoom     = $idx('room_id');
-            $iHari     = $idx('hari');
-            $iStart    = $idx('start_time');
-            $iEnd      = $idx('end_time');
-            $iMK       = $idx('mata_kuliah');
-            $iKelas    = $idx('kelas');
-            $iDosen    = $idx('dosen');
-            $iSemester = $idx('semester');
-            $iAktif    = $idx('aktif');
-
-            $allowedHari = array('senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu', 'minggu');
-
             $rooms = DB::table('rooms')->select('id', 'name')->get();
-
             $roomIdSet = array();
             $roomNameToId = array();
-
             foreach ($rooms as $r) {
                 $roomIdSet[(int) $r->id] = true;
                 $roomNameToId[$this->normalizeRoomName($r->name)] = (int) $r->id;
             }
 
-            $inserted = 0;
-            $updated  = 0;
-            $invalid  = 0;
-            $errors   = array();
-
+            $inserted = 0; $updated  = 0; $invalid  = 0; $errors   = array();
             DB::beginTransaction();
 
             if ($deleteAllFirst) {
@@ -798,137 +561,71 @@ class PbmManageController extends Controller
             }
 
             $rowNum = 1;
+            $allowedHari = array('senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu', 'minggu');
+
             while (($row = fgetcsv($fh, 0, $delimiter)) !== false) {
                 $rowNum++;
-
                 $hasValue = false;
-                foreach ($row as $v) {
-                    if (trim((string) $v) !== '') {
-                        $hasValue = true;
-                        break;
-                    }
-                }
+                foreach ($row as $v) { if (trim((string) $v) !== '') { $hasValue = true; break; } }
+                if (!$hasValue) continue;
 
-                if (!$hasValue) {
-                    continue;
-                }
+                $roomKey  = trim((string) ($row[$idx('room_id')] ?? ''));
+                $hari     = strtolower(trim((string) ($row[$idx('hari')] ?? '')));
+                $start    = trim((string) ($row[$idx('start_time')] ?? ''));
+                $end      = trim((string) ($row[$idx('end_time')] ?? ''));
+                $mk       = trim((string) ($row[$idx('mata_kuliah')] ?? ''));
+                $kelas    = trim((string) ($row[$idx('kelas')] ?? ''));
+                $dosen    = trim((string) ($row[$idx('dosen')] ?? ''));
+                $semester = trim((string) ($row[$idx('semester')] ?? ''));
+                $aktif    = (trim((string) ($row[$idx('aktif')] ?? '1')) === '0') ? 0 : 1;
 
-                $roomKey  = trim((string) (isset($row[$iRoom]) ? $row[$iRoom] : ''));
-                $hari     = strtolower(trim((string) (isset($row[$iHari]) ? $row[$iHari] : '')));
-                $start    = trim((string) (isset($row[$iStart]) ? $row[$iStart] : ''));
-                $end      = trim((string) (isset($row[$iEnd]) ? $row[$iEnd] : ''));
-                $mk       = trim((string) (isset($row[$iMK]) ? $row[$iMK] : ''));
-                $kelas    = trim((string) (isset($row[$iKelas]) ? $row[$iKelas] : ''));
-                $dosen    = trim((string) (isset($row[$iDosen]) ? $row[$iDosen] : ''));
-                $semester = trim((string) (isset($row[$iSemester]) ? $row[$iSemester] : ''));
-                $aktifRaw = trim((string) (isset($row[$iAktif]) ? $row[$iAktif] : '1'));
-                $aktif    = ($aktifRaw === '0') ? 0 : 1;
-
-                if ($roomKey === '') {
-                    $errors[] = 'Baris ' . $rowNum . ': room_id kosong';
-                    $invalid++;
-                    continue;
-                }
-
-                if (!in_array($hari, $allowedHari, true)) {
-                    $errors[] = 'Baris ' . $rowNum . ': hari tidak valid (' . $hari . ')';
-                    $invalid++;
-                    continue;
-                }
+                if ($roomKey === '') { $errors[] = 'Baris ' . $rowNum . ': room_id kosong'; $invalid++; continue; }
+                if (!in_array($hari, $allowedHari, true)) { $errors[] = 'Baris ' . $rowNum . ': hari tidak valid (' . $hari . ')'; $invalid++; continue; }
 
                 $startNorm = $this->normalizeTime($start);
                 $endNorm   = $this->normalizeTime($end);
-
-                if (!$startNorm || !$endNorm) {
-                    $errors[] = 'Baris ' . $rowNum . ': format jam salah (' . $start . ' - ' . $end . ')';
-                    $invalid++;
-                    continue;
-                }
-
-                if (strtotime($endNorm) <= strtotime($startNorm)) {
-                    $errors[] = 'Baris ' . $rowNum . ': jam selesai harus setelah jam mulai';
-                    $invalid++;
-                    continue;
-                }
+                if (!$startNorm || !$endNorm) { $errors[] = 'Baris ' . $rowNum . ': format jam salah'; $invalid++; continue; }
+                if (strtotime($endNorm) <= strtotime($startNorm)) { $errors[] = 'Baris ' . $rowNum . ': jam terbalik'; $invalid++; continue; }
 
                 $roomId = 0;
                 if (ctype_digit($roomKey)) {
                     $roomId = (int) $roomKey;
-                    if (!isset($roomIdSet[$roomId])) {
-                        $errors[] = 'Baris ' . $rowNum . ': room_id tidak ditemukan (id=' . $roomId . ')';
-                        $invalid++;
-                        continue;
-                    }
+                    if (!isset($roomIdSet[$roomId])) { $errors[] = 'Baris ' . $rowNum . ': room_id tidak ada'; $invalid++; continue; }
                 } else {
                     $roomNorm = $this->normalizeRoomName($roomKey);
-                    $roomId = isset($roomNameToId[$roomNorm]) ? $roomNameToId[$roomNorm] : 0;
-                    if (!$roomId) {
-                        $errors[] = 'Baris ' . $rowNum . ': ruangan tidak ditemukan (name=' . $roomKey . ')';
-                        $invalid++;
-                        continue;
-                    }
+                    $roomId = $roomNameToId[$roomNorm] ?? 0;
+                    if (!$roomId) { $errors[] = 'Baris ' . $rowNum . ': ruangan tidak ada'; $invalid++; continue; }
                 }
 
-                $existing = DB::table('pbm_templates')
-                    ->where('room_id', $roomId)
-                    ->whereRaw('LOWER(hari) = ?', array($hari))
-                    ->where('start_time', $startNorm)
-                    ->where('end_time', $endNorm)
-                    ->first();
+                $existing = DB::table('pbm_templates')->where('room_id', $roomId)->whereRaw('LOWER(hari) = ?', array($hari))
+                    ->where('start_time', $startNorm)->where('end_time', $endNorm)->first();
+
+                $data = array(
+                    'mata_kuliah' => $mk, 'kelas' => $kelas, 'dosen' => $dosen, 'semester' => $semester, 'aktif' => $aktif, 'updated_at' => now(),
+                );
 
                 if ($existing) {
-                    DB::table('pbm_templates')
-                        ->where('id', $existing->id)
-                        ->update(array(
-                            'mata_kuliah' => $mk,
-                            'kelas'       => $kelas,
-                            'dosen'       => $dosen,
-                            'semester'    => $semester,
-                            'aktif'       => $aktif,
-                            'updated_at'  => now(),
-                        ));
-
+                    DB::table('pbm_templates')->where('id', $existing->id)->update($data);
                     $updated++;
-                    continue;
+                } else {
+                    $data['room_id'] = $roomId; $data['hari'] = $hari; $data['start_time'] = $startNorm; $data['end_time'] = $endNorm;
+                    $data['created_at'] = now(); $data['updated_at'] = null;
+                    DB::table('pbm_templates')->insert($data);
+                    $inserted++;
                 }
-
-                DB::table('pbm_templates')->insert(array(
-                    'room_id'     => $roomId,
-                    'hari'        => $hari,
-                    'start_time'  => $startNorm,
-                    'end_time'    => $endNorm,
-                    'mata_kuliah' => $mk,
-                    'kelas'       => $kelas,
-                    'dosen'       => $dosen,
-                    'semester'    => $semester,
-                    'aktif'       => $aktif,
-                    'created_at'  => now(),
-                    'updated_at'  => null,
-                ));
-
-                $inserted++;
             }
 
             fclose($fh);
             DB::commit();
 
             return response()->json(array(
-                'ok'       => true,
-                'inserted' => $inserted,
-                'updated'  => $updated,
-                'skipped'  => 0,
-                'invalid'  => $invalid,
-                'errors'   => $errors,
-                'message'  => 'Upload selesai. Template diperbarui, occurrence akan dibentuk otomatis saat hari / tanggal dibuka.',
+                'ok' => true, 'inserted' => $inserted, 'updated' => $updated, 'invalid' => $invalid, 'errors' => $errors,
+                'message' => 'Upload selesai. Occurrence otomatis dibentuk.',
             ), 200);
         } catch (\Throwable $e) {
             DB::rollBack();
             Log::error('PBM upload CSV error: ' . $e->getMessage());
-
-            return response()->json(array(
-                'ok' => false,
-                'message' => 'Gagal upload CSV: ' . $e->getMessage(),
-            ), 500);
+            return response()->json(array('ok' => false, 'message' => 'Gagal upload CSV: ' . $e->getMessage()), 500);
         }
     }
 
@@ -944,245 +641,141 @@ class PbmManageController extends Controller
         $templates = DB::table('pbm_templates')
             ->whereRaw('LOWER(hari) = ?', array($dayName))
             ->where('aktif', 1)
-            ->orderBy('start_time')
-            ->orderBy('room_id')
-            ->orderBy('id')
             ->get();
 
         foreach ($templates as $template) {
+            // PERBAIKAN 3: Hanya cek apakah jadwal "Native" (is_rescheduled = 0) sudah ada.
+            // Sebelumnya logika `!= rescheduled` membuat sistem malah membuat jadwal "Hantu" baru.
             $exists = DB::table('pbm_occurrences')
                 ->where('pbm_id', (int) $template->id)
                 ->whereDate('occ_date', $date)
+                ->where('is_rescheduled', 0)
                 ->exists();
 
             if ($exists) {
                 continue;
             }
 
-            DB::table('pbm_occurrences')->insert(array(
-                'pbm_id'      => (int) $template->id,
-                'room_id'     => (int) $template->room_id,
-                'occ_date'    => $date,
-                'start_time'  => $date . ' ' . $this->timeToHm($template->start_time) . ':00',
-                'end_time'    => $date . ' ' . $this->timeToHm($template->end_time) . ':00',
-                'status'      => 'approved',
-                'approved_by' => null,
-                'approved_at' => now(),
-                'created_at'  => now(),
-            ));
+            try {
+                DB::table('pbm_occurrences')->insert(array(
+                    'pbm_id'         => (int) $template->id,
+                    'room_id'        => (int) $template->room_id,
+                    'occ_date'       => $date,
+                    'start_time'     => $date . ' ' . $this->timeToHm($template->start_time) . ':00',
+                    'end_time'       => $date . ' ' . $this->timeToHm($template->end_time) . ':00',
+                    'is_rescheduled' => 0, // Ini jadwal asli (rutin)
+                    'status'         => 'approved',
+                    'approved_at'    => now(),
+                    'created_at'     => now(),
+                ));
+            } catch (\Exception $e) {
+                // Abaikan error constraint
+            }
         }
     }
 
-    /**
-     * Buat occurrence untuk semua template aktif pada nama hari tertentu
-     * berdasarkan minggu berjalan.
-     */
-    private function ensureOccurrencesForDayName($hari)
+    private function dateFromIndoDayNameInCurrentWeek($hari)
     {
-        $targetDate = $this->dateFromIndoDayNameInCurrentWeek($hari);
-        $this->ensureOccurrencesForDate($targetDate);
+        $map = array('senin'=>'monday','selasa'=>'tuesday','rabu'=>'wednesday','kamis'=>'thursday','jumat'=>'friday','sabtu'=>'saturday','minggu'=>'sunday');
+        $english = $map[$hari] ?? 'monday';
+        return date('Y-m-d', strtotime($english . ' this week'));
     }
 
-    private function getConflictSummary(
-        $roomId,
-        $date,
-        $startDateTime,
-        $endDateTime,
-        $excludeOccurrenceId = null,
-        $excludeTemplateId = null
-    ) {
+    private function getConflictSummary($roomId, $date, $startDateTime, $endDateTime, $excludeOccurrenceId = null, $excludeTemplateId = null) 
+    {
         $sources = array();
 
+        // PERBAIKAN 4: Merapikan query tanggal Overlap (Start baru < End Lama AND End Baru > Start Lama)
         $occQuery = DB::table('pbm_occurrences')
             ->where('room_id', $roomId)
             ->whereDate('occ_date', $date)
-            ->whereIn('status', array('approved', 'draft'))
+            ->whereIn('status', array('approved', 'rescheduled', 'draft'))
             ->where(function ($q) use ($startDateTime, $endDateTime) {
-                $q->whereRaw('? < end_time', array($startDateTime))
-                  ->whereRaw('? > start_time', array($endDateTime));
+                $q->where('start_time', '<', $endDateTime)
+                  ->where('end_time', '>', $startDateTime);
             });
 
         if ($excludeOccurrenceId) {
             $occQuery->where('id', '!=', (int) $excludeOccurrenceId);
         }
-
         if ($excludeTemplateId) {
             $occQuery->where(function ($q) use ($excludeTemplateId) {
-                $q->whereNull('pbm_id')
-                  ->orWhere('pbm_id', '!=', (int) $excludeTemplateId);
+                $q->whereNull('pbm_id')->orWhere('pbm_id', '!=', (int) $excludeTemplateId);
             });
         }
-
-        if ($occQuery->exists()) {
-            $sources[] = 'jadwal PBM';
-        }
+        if ($occQuery->exists()) $sources[] = 'jadwal PBM';
 
         $blockConflict = DB::table('room_blocks')
-            ->where('room_id', $roomId)
-            ->where('status', 'terbooking')
+            ->where('room_id', $roomId)->where('status', 'terbooking')
             ->where(function ($q) use ($startDateTime, $endDateTime) {
-                $q->whereRaw('? < end_time', array($startDateTime))
-                  ->whereRaw('? > start_time', array($endDateTime));
-            })
-            ->exists();
+                $q->where('start_time', '<', $endDateTime)->where('end_time', '>', $startDateTime);
+            })->exists();
+        if ($blockConflict) $sources[] = 'quick booking / room block';
 
-        if ($blockConflict) {
-            $sources[] = 'quick booking / room block';
-        }
-
+        // Admin dilarang memindah jadwal jika sudah ditabrak mahasiswa (status menunggu/disetujui)
         $borrowConflict = DB::table('borrow_requests')
-            ->where('room_id', $roomId)
-            // HANYA CEK YANG SUDAH DISETUJUI, JANGAN CEK YANG MASIH MENUNGGU
-            ->whereIn('status', array('disetujui')) 
+            ->where('room_id', $roomId)->whereIn('status', array('menunggu', 'disetujui')) 
             ->where(function ($q) use ($startDateTime, $endDateTime) {
-                $q->whereRaw('? < end_time', array($startDateTime))
-                  ->whereRaw('? > start_time', array($endDateTime));
-            })
-            ->exists();
-
-        if ($borrowConflict) {
-            $sources[] = 'booking mahasiswa';
-        }
+                $q->where('start_time', '<', $endDateTime)->where('end_time', '>', $startDateTime);
+            })->exists();
+        if ($borrowConflict) $sources[] = 'booking mahasiswa';
 
         $has = !empty($sources);
-
-        return array(
-            'has_conflict' => $has,
-            'sources'      => $sources,
-            'message'      => $has ? 'Jadwal bentrok dengan: ' . implode(', ', $sources) . '.' : '',
-        );
+        return array('has_conflict' => $has, 'sources' => $sources, 'message' => $has ? 'Ruangan terpakai jadwal lain pada jam tersebut.' : '');
     }
 
-    /**
-     * Cek bentrok antar Template PBM rutin (Hari yang sama, Ruangan yang sama)
-     */
     private function checkTemplateConflict($roomId, $hari, $startTime, $endTime, $excludeId = 0)
     {
         $query = DB::table('pbm_templates')
-            ->where('room_id', $roomId)
-            ->whereRaw('LOWER(hari) = ?', array($hari))
-            ->where('aktif', 1)
-            ->whereRaw('? < end_time', array($startTime)) // Logika irisan waktu
-            ->whereRaw('? > start_time', array($endTime));
-
-        if ($excludeId > 0) {
-            $query->where('id', '!=', $excludeId);
-        }
-
+            ->where('room_id', $roomId)->whereRaw('LOWER(hari) = ?', array($hari))->where('aktif', 1)
+            ->where(function ($q) use ($startTime, $endTime) {
+                $q->where('start_time', '<', $endTime)
+                  ->where('end_time', '>', $startTime);
+            });
+        if ($excludeId > 0) $query->where('id', '!=', $excludeId);
         return $query->exists();
     }
 
-    /**
-     * =========================================================
-     * GENERAL HELPERS
-     * =========================================================
-     */
     private function dayNameFromDate($date)
     {
-        $map = array(
-            'Monday'    => 'senin',
-            'Tuesday'   => 'selasa',
-            'Wednesday' => 'rabu',
-            'Thursday'  => 'kamis',
-            'Friday'    => 'jumat',
-            'Saturday'  => 'sabtu',
-            'Sunday'    => 'minggu',
-        );
-
-        $day = date('l', strtotime($date));
-        return isset($map[$day]) ? $map[$day] : 'senin';
+        $map = array('Monday'=>'senin','Tuesday'=>'selasa','Wednesday'=>'rabu','Thursday'=>'kamis','Friday'=>'jumat','Saturday'=>'sabtu','Sunday'=>'minggu');
+        return $map[date('l', strtotime($date))] ?? 'senin';
     }
 
     private function englishDayNameFromIndo($hari)
     {
-        $map = array(
-            'senin'  => 'monday',
-            'selasa' => 'tuesday',
-            'rabu'   => 'wednesday',
-            'kamis'  => 'thursday',
-            'jumat'  => 'friday',
-            'sabtu'  => 'saturday',
-            'minggu' => 'sunday',
-        );
-
-        return isset($map[$hari]) ? $map[$hari] : '';
-    }
-
-    private function dateFromIndoDayNameInCurrentWeek($hari)
-    {
-        $map = array(
-            'senin'  => 'monday',
-            'selasa' => 'tuesday',
-            'rabu'   => 'wednesday',
-            'kamis'  => 'thursday',
-            'jumat'  => 'friday',
-            'sabtu'  => 'saturday',
-            'minggu' => 'sunday',
-        );
-
-        $english = isset($map[$hari]) ? $map[$hari] : 'monday';
-        return date('Y-m-d', strtotime($english . ' this week'));
+        $map = array('senin'=>'monday','selasa'=>'tuesday','rabu'=>'wednesday','kamis'=>'thursday','jumat'=>'friday','sabtu'=>'saturday','minggu'=>'sunday');
+        return $map[$hari] ?? '';
     }
 
     private function isValidDate($date)
     {
-        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
-            return false;
-        }
-
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) return false;
         $parts = explode('-', $date);
-        $y = isset($parts[0]) ? (int) $parts[0] : 0;
-        $m = isset($parts[1]) ? (int) $parts[1] : 0;
-        $d = isset($parts[2]) ? (int) $parts[2] : 0;
-
-        return checkdate($m, $d, $y);
+        return checkdate((int)$parts[1], (int)$parts[2], (int)$parts[0]);
     }
 
     private function normalizeTime($t)
     {
         $t = trim((string) $t);
-
-        if ($t === '') {
-            return null;
-        }
-
-        if (preg_match('/^\d{2}:\d{2}$/', $t)) {
-            return $t . ':00';
-        }
-
-        if (preg_match('/^\d{2}:\d{2}:\d{2}$/', $t)) {
-            return $t;
-        }
-
+        if ($t === '') return null;
+        if (preg_match('/^\d{2}:\d{2}$/', $t)) return $t . ':00';
+        if (preg_match('/^\d{2}:\d{2}:\d{2}$/', $t)) return $t;
         return null;
     }
 
     private function normalizeHm($t)
     {
         $t = trim((string) $t);
-
-        if (preg_match('/^\d{2}:\d{2}$/', $t)) {
-            return $t;
-        }
-
-        if (preg_match('/^\d{2}:\d{2}:\d{2}$/', $t)) {
-            return substr($t, 0, 5);
-        }
-
+        if (preg_match('/^\d{2}:\d{2}$/', $t)) return $t;
+        if (preg_match('/^\d{2}:\d{2}:\d{2}$/', $t)) return substr($t, 0, 5);
         return null;
     }
 
-    private function timeToHm($t)
-    {
-        return substr((string) $t, 0, 5);
-    }
+    private function timeToHm($t) { return substr((string) $t, 0, 5); }
 
     private function normalizeRoomName($name)
     {
-        $s = strtolower(trim((string) $name));
-        $s = str_replace('.', '', $s);
-        $s = str_replace('-', '', $s);
-        $s = preg_replace('/\s+/', '', $s);
-        return $s;
+        return preg_replace('/\s+/', '', str_replace(['.', '-'], '', strtolower(trim((string) $name))));
     }
 }

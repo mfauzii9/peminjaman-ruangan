@@ -107,7 +107,7 @@
   }
 
   .sidebar.sb {
-    width: 240px; /* Ukuran diperkecil dari 270px */
+    width: 240px;
     min-width: 240px;
     height: 100vh;
     position: sticky;
@@ -123,25 +123,17 @@
     z-index: 100;
   }
 
-  /* Custom Scrollbar for Sidebar */
   .sidebar.sb::-webkit-scrollbar { width: 3px; }
   .sidebar.sb::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
 
-  /* --- BRAND & FOTO PROFIL --- */
   .sb__brand {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 28px 12px 16px;
-    position: relative;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-    margin-bottom: 8px;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 28px 12px 16px; position: relative;
+    border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 8px;
   }
   .sb__toggle {
-    position: absolute; 
-    top: 12px; right: 12px;
-    background: transparent; 
-    border: none; color: rgba(255,255,255,0.7);
+    position: absolute; top: 12px; right: 12px;
+    background: transparent; border: none; color: rgba(255,255,255,0.7);
     width: 28px; height: 28px; border-radius: 6px;
     cursor: pointer; display: grid; place-items: center;
     font-size: 15px; transition: all 0.2s;
@@ -149,32 +141,16 @@
   .sb__toggle:hover { background: rgba(255,255,255,0.15); color: #fff; }
 
   .sb__logo {
-    width: 64px; height: 64px; /* Foto diperkecil dari 80px */
-    border-radius: 16px;
-    background: #ffffff;
+    width: 64px; height: 64px; border-radius: 16px; background: #ffffff;
     display: flex; justify-content: center; align-items: center;
-    overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    margin-bottom: 12px;
-    transition: all var(--sb-transition);
+    overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    margin-bottom: 12px; transition: all var(--sb-transition);
   }
   .sb__logo img { width: 100%; height: 100%; object-fit: cover; }
   
-  .sb__titleMain { 
-    font-weight: 800; font-size: 15px; 
-    letter-spacing: 0.3px; white-space: nowrap; 
-    line-height: 1.2; color: #ffffff;
-    margin-bottom: 6px;
-  }
-  .sb__titleBadge { 
-    background: rgba(255, 255, 255, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    color: #fff; font-size: 9px; font-weight: 800; 
-    padding: 3px 10px; border-radius: 999px; 
-    letter-spacing: 0.8px; white-space: nowrap;
-  }
+  .sb__titleMain { font-weight: 800; font-size: 15px; letter-spacing: 0.3px; white-space: nowrap; line-height: 1.2; color: #ffffff; margin-bottom: 6px; }
+  .sb__titleBadge { background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.3); color: #fff; font-size: 9px; font-weight: 800; padding: 3px 10px; border-radius: 999px; letter-spacing: 0.8px; white-space: nowrap; }
 
-  /* --- COLLAPSED STATE --- */
   html.sb-collapsed .sidebar.sb { width: 76px; min-width: 76px; }
   html.sb-collapsed .sidebar.sb .sb__text,
   html.sb-collapsed .sidebar.sb .sb__titleMain,
@@ -192,73 +168,43 @@
   html.sb-collapsed .sidebar.sb .sb__user { justify-content: center; padding: 10px 0; background: transparent; }
   html.sb-collapsed .sidebar.sb .sb__logout { justify-content: center; padding: 10px; }
 
-  /* --- NAVIGATION --- */
   .sb__nav { display: flex; flex-direction: column; gap: 14px; padding: 8px 14px; flex: 1; }
   .sb__section { display: flex; flex-direction: column; gap: 4px; }
-  .sb__sectionLabel {
-    font-size: 9.5px; font-weight: 700; color: var(--sb-muted);
-    letter-spacing: 0.8px; padding: 0 10px; margin-bottom: 2px;
-  }
+  .sb__sectionLabel { font-size: 9.5px; font-weight: 700; color: var(--sb-muted); letter-spacing: 0.8px; padding: 0 10px; margin-bottom: 2px; }
 
   .sb__item {
-    display: flex; align-items: center; gap: 10px;
-    padding: 10px 12px;
-    border-radius: var(--sb-radius);
-    text-decoration: none; color: rgba(255,255,255,0.85);
-    font-weight: 600; font-size: 13px; /* Diperkecil */
-    transition: all 0.2s ease;
-    position: relative;
-    border: 1px solid transparent;
+    display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+    border-radius: var(--sb-radius); text-decoration: none; color: rgba(255,255,255,0.85);
+    font-weight: 600; font-size: 13px; transition: all 0.2s ease;
+    position: relative; border: 1px solid transparent;
   }
   .sb__item:hover { background: rgba(255,255,255,0.1); color: #fff; }
-  
-  .sb__item.is-active {
-    background: rgba(255, 255, 255, 0.2);
-    color: #ffffff;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  }
+  .sb__item.is-active { background: rgba(255, 255, 255, 0.2); color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.15); box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
   
   .sb__ico { font-size: 14px; width: 20px; text-align: center; transition: color 0.2s; }
   .sb__item.is-active .sb__ico { color: #ffffff; }
   .sb__text { white-space: nowrap; flex: 1; }
 
-  /* --- BADGE --- */
   .sb__badgePremium {
-    background: #ef4444; color: #fff;
-    font-size: 10px; font-weight: 800;
-    padding: 2px 6px; border-radius: 999px;
-    box-shadow: 0 2px 4px rgba(239,68,68,0.3);
+    background: #ef4444; color: #fff; font-size: 10px; font-weight: 800;
+    padding: 2px 6px; border-radius: 999px; box-shadow: 0 2px 4px rgba(239,68,68,0.3);
   }
   .sb__badgePremium.is-on { animation: pulseBadge 2s infinite; }
   @keyframes pulseBadge { 0% { transform: scale(1); } 50% { transform: scale(1.06); } 100% { transform: scale(1); } }
 
-  /* --- FOOTER --- */
   .sb__footer { padding: 14px; margin-top: auto; display: flex; flex-direction: column; gap: 8px; border-top: 1px solid rgba(255,255,255,0.1); }
-  .sb__user {
-    display: flex; align-items: center; gap: 10px;
-    padding: 10px; background: rgba(0,0,0,0.15);
-    border-radius: var(--sb-radius);
-  }
-  .sb__avatar {
-    width: 32px; height: 32px; border-radius: 8px;
-    background: rgba(255,255,255,0.15); color: #fff;
-    display: grid; place-items: center; font-size: 14px; flex-shrink: 0;
-  }
+  .sb__user { display: flex; align-items: center; gap: 10px; padding: 10px; background: rgba(0,0,0,0.15); border-radius: var(--sb-radius); }
+  .sb__avatar { width: 32px; height: 32px; border-radius: 8px; background: rgba(255,255,255,0.15); color: #fff; display: grid; place-items: center; font-size: 14px; flex-shrink: 0; }
   .sb__username { font-weight: 700; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #fff; }
   .sb__role { font-size: 10.5px; color: var(--sb-muted); white-space: nowrap; }
 
   .sb__logout {
-    display: flex; align-items: center; gap: 10px;
-    width: 100%; padding: 10px 12px;
-    border-radius: var(--sb-radius);
-    background: transparent; border: 1px solid transparent;
-    color: #fca5a5; font-weight: 600; font-size: 12.5px; cursor: pointer;
-    transition: all 0.2s;
+    display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px;
+    border-radius: var(--sb-radius); background: transparent; border: 1px solid transparent;
+    color: #fca5a5; font-weight: 600; font-size: 12.5px; cursor: pointer; transition: all 0.2s;
   }
   .sb__logout:hover { background: rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.3); color: #fff; }
 
-  /* Responsive */
   @media (max-width: 768px) {
     .sidebar.sb { position: fixed; z-index: 1000; transform: translateX(0); }
     html.sb-collapsed .sidebar.sb { transform: translateX(-100%); }
@@ -274,7 +220,6 @@
     function initSidebar(){
       try{
         const saved = localStorage.getItem(KEY);
-        // Otomatis collapse di HP
         if (window.innerWidth <= 768) {
             document.documentElement.classList.add("sb-collapsed");
         } else if (saved === "1") {
@@ -352,7 +297,7 @@
         try{ localStorage.setItem(LAST_POPUP_KEY, String(now)); }catch(e){}
 
         ensureSwal(function(){
-          const goUrl = @json(route('admin.pengajuan', ['view'=>'history','status'=>'menunggu']));
+          const goUrl = "{{ route('admin.pengajuan', ['view'=>'history','status'=>'menunggu']) }}";
 
           if (window.Swal && typeof window.Swal.fire === "function"){
             Swal.fire({
@@ -379,13 +324,35 @@
       }
     }
 
-    return { initSidebar, toggleSidebar, setPendingBadge, maybeShowPendingPopup };
+    // --- FUNGSI AJAX POLLING BARU ---
+    function startPolling(){
+      // Mengecek data ke server setiap 15 detik (15000 ms)
+      setInterval(() => {
+        fetch('/admin/api/pending-count', {
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+          }
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data && typeof data.pending !== 'undefined') {
+            setPendingBadge(data.pending); // Update angka badge
+            maybeShowPendingPopup();       // Tampilkan popup jika ada yang baru
+          }
+        })
+        .catch(err => console.error("Polling Error:", err));
+      }, 1000); 
+    }
+
+    return { initSidebar, toggleSidebar, setPendingBadge, maybeShowPendingPopup, startPolling };
   })();
 
   (function(){
     const run = function(){
       try{ AdminUI.initSidebar(); }catch(e){}
       try{ AdminUI.maybeShowPendingPopup(); }catch(e){}
+      try{ AdminUI.startPolling(); }catch(e){} // Jalankan fungsi polling saat load
     };
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", run);
     else run();

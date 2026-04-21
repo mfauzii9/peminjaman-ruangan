@@ -27,21 +27,21 @@ class RoomController extends Controller
         SELECT
           r.*,
 
-          /* PBM aktif sekarang */
+          /* PBM aktif sekarang (Termasuk jadwal pindahan) */
           EXISTS(
             SELECT 1
             FROM pbm_occurrences o
             WHERE o.room_id = r.id
-              AND o.status = 'approved'
+              AND o.status IN ('approved', 'rescheduled')
               AND NOW() BETWEEN o.start_time AND o.end_time
           ) AS pbm_now,
 
-          /* Pengajuan mahasiswa ACC aktif sekarang */
+          /* Pengajuan mahasiswa aktif sekarang (Termasuk yang masih antre/menunggu) */
           EXISTS(
             SELECT 1
             FROM borrow_requests b
             WHERE b.room_id = r.id
-              AND b.status = 'disetujui'
+              AND b.status IN ('disetujui', 'menunggu')
               AND NOW() BETWEEN b.start_time AND b.end_time
           ) AS borrow_now,
 
@@ -59,7 +59,7 @@ class RoomController extends Controller
             SELECT o.start_time
             FROM pbm_occurrences o
             WHERE o.room_id = r.id
-              AND o.status = 'approved'
+              AND o.status IN ('approved', 'rescheduled')
               AND o.start_time > NOW()
             ORDER BY o.start_time ASC
             LIMIT 1
@@ -69,7 +69,7 @@ class RoomController extends Controller
             SELECT o.end_time
             FROM pbm_occurrences o
             WHERE o.room_id = r.id
-              AND o.status = 'approved'
+              AND o.status IN ('approved', 'rescheduled')
               AND o.start_time > NOW()
             ORDER BY o.start_time ASC
             LIMIT 1
@@ -80,7 +80,7 @@ class RoomController extends Controller
             FROM pbm_occurrences o
             JOIN pbm_templates p ON p.id = o.pbm_id
             WHERE o.room_id = r.id
-              AND o.status = 'approved'
+              AND o.status IN ('approved', 'rescheduled')
               AND o.start_time > NOW()
             ORDER BY o.start_time ASC
             LIMIT 1
@@ -90,18 +90,18 @@ class RoomController extends Controller
             SELECT TIMESTAMPDIFF(MINUTE, NOW(), o.start_time)
             FROM pbm_occurrences o
             WHERE o.room_id = r.id
-              AND o.status = 'approved'
+              AND o.status IN ('approved', 'rescheduled')
               AND o.start_time > NOW()
             ORDER BY o.start_time ASC
             LIMIT 1
           ) AS mins_to_next_pbm,
 
-          /* Next Pengajuan mahasiswa ACC */
+          /* Next Pengajuan mahasiswa */
           (
             SELECT b.start_time
             FROM borrow_requests b
             WHERE b.room_id = r.id
-              AND b.status = 'disetujui'
+              AND b.status IN ('disetujui', 'menunggu')
               AND b.start_time > NOW()
             ORDER BY b.start_time ASC
             LIMIT 1
@@ -111,7 +111,7 @@ class RoomController extends Controller
             SELECT b.end_time
             FROM borrow_requests b
             WHERE b.room_id = r.id
-              AND b.status = 'disetujui'
+              AND b.status IN ('disetujui', 'menunggu')
               AND b.start_time > NOW()
             ORDER BY b.start_time ASC
             LIMIT 1
@@ -121,7 +121,7 @@ class RoomController extends Controller
             SELECT b.org_name
             FROM borrow_requests b
             WHERE b.room_id = r.id
-              AND b.status = 'disetujui'
+              AND b.status IN ('disetujui', 'menunggu')
               AND b.start_time > NOW()
             ORDER BY b.start_time ASC
             LIMIT 1
@@ -131,7 +131,7 @@ class RoomController extends Controller
             SELECT TIMESTAMPDIFF(MINUTE, NOW(), b.start_time)
             FROM borrow_requests b
             WHERE b.room_id = r.id
-              AND b.status = 'disetujui'
+              AND b.status IN ('disetujui', 'menunggu')
               AND b.start_time > NOW()
             ORDER BY b.start_time ASC
             LIMIT 1
@@ -184,14 +184,14 @@ class RoomController extends Controller
               SELECT 1
               FROM pbm_occurrences o
               WHERE o.room_id = r.id
-                AND o.status = 'approved'
+                AND o.status IN ('approved', 'rescheduled')
                 AND NOW() BETWEEN o.start_time AND o.end_time
             )
             OR EXISTS(
               SELECT 1
               FROM borrow_requests b
               WHERE b.room_id = r.id
-                AND b.status = 'disetujui'
+                AND b.status IN ('disetujui', 'menunggu')
                 AND NOW() BETWEEN b.start_time AND b.end_time
             )
             OR EXISTS(
@@ -211,14 +211,14 @@ class RoomController extends Controller
                 SELECT 1
                 FROM pbm_occurrences o
                 WHERE o.room_id = r.id
-                  AND o.status = 'approved'
+                  AND o.status IN ('approved', 'rescheduled')
                   AND NOW() BETWEEN o.start_time AND o.end_time
               )
               AND NOT EXISTS(
                 SELECT 1
                 FROM borrow_requests b
                 WHERE b.room_id = r.id
-                  AND b.status = 'disetujui'
+                  AND b.status IN ('disetujui', 'menunggu')
                   AND NOW() BETWEEN b.start_time AND b.end_time
               )
               AND NOT EXISTS(
@@ -233,7 +233,7 @@ class RoomController extends Controller
                   SELECT 1
                   FROM pbm_occurrences o
                   WHERE o.room_id = r.id
-                    AND o.status = 'approved'
+                    AND o.status IN ('approved', 'rescheduled')
                     AND o.start_time > NOW()
                     AND o.start_time <= DATE_ADD(NOW(), INTERVAL {$soonMinutes} MINUTE)
                 )
@@ -241,7 +241,7 @@ class RoomController extends Controller
                   SELECT 1
                   FROM borrow_requests b
                   WHERE b.room_id = r.id
-                    AND b.status = 'disetujui'
+                    AND b.status IN ('disetujui', 'menunggu')
                     AND b.start_time > NOW()
                     AND b.start_time <= DATE_ADD(NOW(), INTERVAL {$soonMinutes} MINUTE)
                 )
@@ -268,13 +268,13 @@ class RoomController extends Controller
               EXISTS(
                 SELECT 1 FROM pbm_occurrences o
                 WHERE o.room_id = r.id
-                  AND o.status = 'approved'
+                  AND o.status IN ('approved', 'rescheduled')
                   AND NOW() BETWEEN o.start_time AND o.end_time
               )
               OR EXISTS(
                 SELECT 1 FROM borrow_requests b
                 WHERE b.room_id = r.id
-                  AND b.status = 'disetujui'
+                  AND b.status IN ('disetujui', 'menunggu')
                   AND NOW() BETWEEN b.start_time AND b.end_time
               )
               OR EXISTS(
@@ -289,13 +289,13 @@ class RoomController extends Controller
               NOT EXISTS(
                 SELECT 1 FROM pbm_occurrences o
                 WHERE o.room_id = r.id
-                  AND o.status = 'approved'
+                  AND o.status IN ('approved', 'rescheduled')
                   AND NOW() BETWEEN o.start_time AND o.end_time
               )
               AND NOT EXISTS(
                 SELECT 1 FROM borrow_requests b
                 WHERE b.room_id = r.id
-                  AND b.status = 'disetujui'
+                  AND b.status IN ('disetujui', 'menunggu')
                   AND NOW() BETWEEN b.start_time AND b.end_time
               )
               AND NOT EXISTS(
@@ -308,14 +308,14 @@ class RoomController extends Controller
                 EXISTS(
                   SELECT 1 FROM pbm_occurrences o
                   WHERE o.room_id = r.id
-                    AND o.status = 'approved'
+                    AND o.status IN ('approved', 'rescheduled')
                     AND o.start_time > NOW()
                     AND o.start_time <= DATE_ADD(NOW(), INTERVAL {$soonMinutes} MINUTE)
                 )
                 OR EXISTS(
                   SELECT 1 FROM borrow_requests b
                   WHERE b.room_id = r.id
-                    AND b.status = 'disetujui'
+                    AND b.status IN ('disetujui', 'menunggu')
                     AND b.start_time > NOW()
                     AND b.start_time <= DATE_ADD(NOW(), INTERVAL {$soonMinutes} MINUTE)
                 )
@@ -333,13 +333,13 @@ class RoomController extends Controller
               EXISTS(
                 SELECT 1 FROM pbm_occurrences o
                 WHERE o.room_id = r.id
-                  AND o.status = 'approved'
+                  AND o.status IN ('approved', 'rescheduled')
                   AND NOW() BETWEEN o.start_time AND o.end_time
               )
               OR EXISTS(
                 SELECT 1 FROM borrow_requests b
                 WHERE b.room_id = r.id
-                  AND b.status = 'disetujui'
+                  AND b.status IN ('disetujui', 'menunggu')
                   AND NOW() BETWEEN b.start_time AND b.end_time
               )
               OR EXISTS(
@@ -351,14 +351,14 @@ class RoomController extends Controller
               OR EXISTS(
                 SELECT 1 FROM pbm_occurrences o
                 WHERE o.room_id = r.id
-                  AND o.status = 'approved'
+                  AND o.status IN ('approved', 'rescheduled')
                   AND o.start_time > NOW()
                   AND o.start_time <= DATE_ADD(NOW(), INTERVAL {$soonMinutes} MINUTE)
               )
               OR EXISTS(
                 SELECT 1 FROM borrow_requests b
                 WHERE b.room_id = r.id
-                  AND b.status = 'disetujui'
+                  AND b.status IN ('disetujui', 'menunggu')
                   AND b.start_time > NOW()
                   AND b.start_time <= DATE_ADD(NOW(), INTERVAL {$soonMinutes} MINUTE)
               )
@@ -444,7 +444,7 @@ class RoomController extends Controller
                     $chipIcon  = 'fa-lock';
                 }
 
-                // DIUBAH: Tombol tidak pernah di-disable
+                // Tombol tidak pernah di-disable, biar mahasiswa tetap bisa merencanakan jadwal hari lain
                 $disableAjukan = false;
 
                 $warnMsg = '';
@@ -502,20 +502,22 @@ class RoomController extends Controller
             $rangeStart = $todayStart->toDateTimeString();
             $rangeEnd   = $futureEnd->toDateTimeString();
 
+            // Ambil jadwal PBM (Termasuk Reschedule)
             $pbmRows = DB::table('pbm_occurrences as o')
                 ->join('pbm_templates as p', 'p.id', '=', 'o.pbm_id')
-                ->select('o.room_id', 'o.start_time', 'o.end_time', 'p.mata_kuliah')
+                ->select('o.room_id', 'o.start_time', 'o.end_time', 'p.mata_kuliah', 'o.status')
                 ->whereIn('o.room_id', $roomIds)
-                ->where('o.status', 'approved')
+                ->whereIn('o.status', ['approved', 'rescheduled'])
                 ->where('o.start_time', '<', $rangeEnd)
                 ->where('o.end_time', '>', $rangeStart)
                 ->orderBy('o.start_time', 'asc')
                 ->get();
 
+            // Ambil jadwal Mahasiswa (Termasuk yang Menunggu Persetujuan)
             $borRows = DB::table('borrow_requests as b')
-                ->select('b.room_id', 'b.start_time', 'b.end_time', 'b.org_name')
+                ->select('b.room_id', 'b.start_time', 'b.end_time', 'b.org_name', 'b.status')
                 ->whereIn('b.room_id', $roomIds)
-                ->where('b.status', 'disetujui')
+                ->whereIn('b.status', ['disetujui', 'menunggu'])
                 ->where('b.start_time', '<', $rangeEnd)
                 ->where('b.end_time', '>', $rangeStart)
                 ->orderBy('b.start_time', 'asc')
@@ -550,12 +552,16 @@ class RoomController extends Controller
             };
 
             foreach ($pbmRows as $x) {
-                $pushSched($x->room_id, $x->start_time, $x->end_time, 'PBM: ' . $x->mata_kuliah);
+                // Tuliskan [PINDAHAN] jika itu jadwal rescheduled
+                $title = 'PBM: ' . $x->mata_kuliah . ($x->status === 'rescheduled' ? ' [PINDAHAN]' : '');
+                $pushSched($x->room_id, $x->start_time, $x->end_time, $title);
             }
             foreach ($borRows as $x) {
                 $org = trim((string) $x->org_name);
                 if ($org === '') $org = 'Mahasiswa';
-                $pushSched($x->room_id, $x->start_time, $x->end_time, 'Pengajuan: ' . $org);
+                // Tuliskan [PROSES] jika jadwal tersebut masih belum di-ACC
+                $prefix = ($x->status === 'menunggu') ? '[PROSES] ' : '[ACC] ';
+                $pushSched($x->room_id, $x->start_time, $x->end_time, $prefix . 'Pengajuan: ' . $org);
             }
             foreach ($admRows as $x) {
                 $title = trim((string) $x->title);

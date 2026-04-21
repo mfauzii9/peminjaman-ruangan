@@ -7,65 +7,81 @@
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
-    :root{
-      /* Color Palette TEMA BIRU */
-      --primary-50:#eff6ff; --primary-100:#dbeafe; --primary-200:#bfdbfe; --primary-300:#93c5fd;
-      --primary-400:#60a5fa; --primary-500:#3b82f6; --primary-600:#2563eb; --primary-700:#1d4ed8;
-      --primary-800:#1e40af; --primary-900:#1e3a8a;
-
-      --neutral-50:#f8fafc; --neutral-100:#f1f5f9; --neutral-200:#e2e8f0; --neutral-300:#cbd5e1;
-      --neutral-800:#1e293b; --neutral-900:#0f172a;
+    :root {
+      /* Elegant Color Palette: Navy Blue, Sage Green, Light Blue */
+      --navy-900: #0f172a;
+      --navy-800: #1A2942;
+      --navy-600: #2B4266;
+      --navy-400: #4B638A;
       
-      --bg-main:#f4f5f8; 
-      --bg-elevated:#ffffff;
+      --sage-700: #5C6E60;
+      --sage-500: #849B87;
+      --sage-300: #A3B1A6;
+      --sage-100: #E3E8E4;
+      --sage-50:  #F4F7F5;
 
-      --text-primary:#0f172a;
-      --text-secondary:#334155;
-      --text-tertiary:#475569; 
+      --lightblue-500: #60A5FA;
+      --lightblue-300: #93C5FD;
+      --lightblue-100: #DBEAFE;
+      --lightblue-50:  #EFF6FF;
 
-      --border-light:#e2e8f0; 
-      --border-regular:#cbd5e1;
+      --neutral-50: #F8FAFC;
+      --neutral-100: #F1F5F9;
+      --neutral-200: #E2E8F0;
+      --neutral-300: #CBD5E1;
+      
+      --bg-main: #F4F7F6; /* Soft elegant background */
+      --bg-elevated: #FFFFFF;
 
-      --shadow-sm:0 1px 2px 0 rgb(0 0 0 / 0.05);
-      --shadow-md:0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -1px rgb(0 0 0 / 0.06); 
-      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-      --shadow-card: 0 2px 8px -2px rgba(15, 23, 42, 0.12);
+      --text-primary: #1A2942; /* Navy dominant */
+      --text-secondary: #4B638A;
+      --text-tertiary: #64748b; 
 
-      --radius:0.75rem;
-      --radius-xl:1rem;
-      --radius-2xl:1.25rem;
+      --border-light: #E2E8F0; 
+      --border-regular: #CBD5E1;
 
-      --font-sans:'Inter', system-ui, -apple-system, sans-serif;
+      --shadow-sm: 0 1px 2px 0 rgba(26, 41, 66, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(26, 41, 66, 0.08), 0 2px 4px -1px rgba(26, 41, 66, 0.04); 
+      --shadow-lg: 0 10px 15px -3px rgba(26, 41, 66, 0.1), 0 4px 6px -4px rgba(26, 41, 66, 0.05);
+      --shadow-card: 0 2px 8px -2px rgba(26, 41, 66, 0.08);
+
+      --radius-sm: 0.5rem;
+      --radius: 0.75rem;
+      --radius-xl: 1rem;
+      --radius-2xl: 1.25rem;
+
+      --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
 
       /* Font Sizes */
-      --fs-xs:0.7rem;
-      --fs-sm:0.85rem;
-      --fs-base:0.95rem;
-      --fs-md:1.1rem;
-      --fs-lg:1.25rem;
-      --fs-xl:1.5rem;
-      --fs-3xl:2.25rem;
+      --fs-xs: 0.75rem;
+      --fs-sm: 0.875rem;
+      --fs-base: 1rem;
+      --fs-md: 1.125rem;
+      --fs-lg: 1.25rem;
+      --fs-xl: 1.5rem;
+      --fs-2xl: 2rem;
+      --fs-3xl: 2.5rem;
 
-      /* Colors for Schedule Cards */
-      --pbm-bg: #e0f2fe;     
-      --pbm-border: #0284c7; 
-      --pbm-text: #075985;   
+      /* Colors for Schedule Cards - Adjusted to Palette */
+      --pbm-bg: var(--lightblue-50);     
+      --pbm-border: var(--lightblue-500); 
+      --pbm-text: var(--navy-800);   
 
-      --mhs-bg: #dcfce7;     
-      --mhs-border: #16a34a; 
-      --mhs-text: #14532d;   
+      --mhs-bg: var(--sage-50);     
+      --mhs-border: var(--sage-500); 
+      --mhs-text: var(--sage-700);   
 
-      --book-bg: #ffedd5;    
-      --book-border: #ea580c;
-      --book-text: #7c2d12;  
+      --book-bg: #FFF7ED;    
+      --book-border: #F97316;
+      --book-text: #9A3412;  
       
-      --umum-bg: #f3e8ff;    
-      --umum-border: #9333ea;
-      --umum-text: #581c87;
+      --umum-bg: var(--neutral-50);    
+      --umum-border: var(--navy-400);
+      --umum-text: var(--navy-800);
     }
 
     *{margin:0;padding:0;box-sizing:border-box}
@@ -79,92 +95,103 @@
     }
 
     /* --- CUSTOM SCROLLBAR --- */
-    ::-webkit-scrollbar { width: 6px; height: 8px; }
-    ::-webkit-scrollbar-track { background: var(--neutral-100); border-radius: 4px; }
-    ::-webkit-scrollbar-thumb { background: var(--neutral-300); border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--neutral-50); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb { background: var(--sage-300); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--sage-500); }
 
     /* --- APP NAVIGATION BAR --- */
     .app-navbar {
         position: fixed;
         top: 0; left: 0; right: 0;
-        height: 64px;
+        height: 70px;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 0 2rem;
+        padding: 0 5%;
         z-index: 1000;
         transition: all 0.3s ease;
         background: transparent;
     }
     .app-navbar.scrolled {
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(12px);
+        background: rgba(255, 255, 255, 0.98);
+        backdrop-filter: blur(10px);
         border-bottom: 1px solid var(--border-light);
         box-shadow: var(--shadow-sm);
     }
     .nav-brand {
-        font-weight: 900;
+        font-weight: 800;
         font-size: var(--fs-md);
-        color: rgba(255, 255, 255, 0.95);
+        color: var(--navy-800);
         display: flex;
         align-items: center;
-        gap: 0.6rem;
-        transition: color 0.3s;
+        gap: 0.75rem;
+        text-decoration: none;
     }
-    .app-navbar.scrolled .nav-brand { color: var(--primary-800); }
 
     /* --- HERO SECTION --- */
     .hero{
       position:relative;
-      min-height: clamp(400px, 60vh, 600px);
+      min-height: clamp(300px, 35vh, 400px);
       display:flex;
       align-items:center;
       overflow:hidden;
-      background:#0f172a;
+      background: transparent;
     }
     .hero-bg{
       position:absolute;
       inset:0;
-      background-image:url("{{ asset('foto/banner.png') }}");
-      background-size:cover;
-      background-position:center;
-      background-repeat:no-repeat;
-      transform:scale(1.05);
-      filter: contrast(1.1) saturate(1.1) brightness(0.4);
+      background: linear-gradient(180deg, #ffffff 0%, var(--bg-main) 100%);
+      z-index: 1;
     }
+    .hero-bg::before {
+      content: '';
+      position: absolute;
+      top: -30%; left: -10%;
+      width: 60%; height: 80%;
+      background: radial-gradient(circle, var(--lightblue-100) 0%, transparent 70%);
+      opacity: 0.5;
+      filter: blur(50px);
+    }
+    .hero-bg::after {
+      content: '';
+      position: absolute;
+      bottom: -10%; right: -10%;
+      width: 50%; height: 70%;
+      background: radial-gradient(circle, var(--sage-100) 0%, transparent 60%);
+      opacity: 0.7;
+      filter: blur(40px);
+    }
+
     .hero-content{
       position:relative;
       z-index:3;
-      max-width:900px;
+      max-width:800px;
       margin: 0 auto;
-      padding: 80px 1.5rem 3rem;
-      color:#fff;
+      padding: 80px 1.5rem 2rem;
       text-align:center;
     }
     .hero-title{
       font-size:var(--fs-3xl);
       line-height:1.2;
-      letter-spacing:-.02em;
-      font-weight:900;
-      text-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      letter-spacing:-.03em;
+      font-weight:800;
+      color: var(--navy-900);
     }
     .hero-title span{
-      background: linear-gradient(135deg, #bfdbfe, #60a5fa);
-      -webkit-background-clip:text;
-      background-clip:text;
-      color:transparent;
+      color: var(--sage-500);
     }
     .hero-desc{
-      margin:1rem auto 0;
-      max-width:650px;
+      margin:1.25rem auto 0;
+      max-width:600px;
       font-size:var(--fs-base);
-      color:rgba(255,255,255,0.85);
+      color:var(--text-secondary);
+      font-weight: 400;
     }
 
     /* --- CENTERED MAIN NAVIGATION (PILLS) --- */
     .hero-nav-pills {
-      margin-top: 2rem;
+      margin-top: 2.5rem;
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
@@ -173,72 +200,67 @@
     .nav-pill {
       display: inline-flex;
       align-items: center;
-      gap: 0.6rem;
-      padding: 0.75rem 1.75rem;
-      border-radius: 999px; /* Bentuk Kapsul */
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      border-radius: 999px;
       font-size: var(--fs-sm);
-      font-weight: 800;
+      font-weight: 600;
       text-decoration: none;
-      transition: all 0.3s ease;
-      /* Gaya Default (Tidak Aktif) untuk latar gelap */
-      background: rgba(255, 255, 255, 0.1); 
-      color: #ffffff;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      backdrop-filter: blur(8px);
+      transition: all 0.2s ease;
+      background: var(--bg-elevated); 
+      color: var(--navy-600);
+      border: 1px solid var(--border-light);
+      box-shadow: var(--shadow-sm);
     }
     .nav-pill i {
-      font-size: 1.1rem;
+      font-size: 1rem;
+      color: var(--sage-500);
     }
     .nav-pill:hover {
-      background: rgba(255, 255, 255, 0.2);
-      transform: translateY(-2px);
+      border-color: var(--sage-300);
+      color: var(--navy-800);
+      box-shadow: var(--shadow-md);
     }
-    /* Gaya State Aktif */
     .nav-pill.active {
-      background: var(--primary-600);
+      background: var(--navy-800);
       color: #ffffff;
-      border-color: var(--primary-600);
-      box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
+      border-color: var(--navy-800);
     }
-    .nav-pill.active:hover {
-      background: var(--primary-700);
+    .nav-pill.active i {
+      color: var(--sage-300);
     }
 
     /* --- MAIN LAYOUT --- */
     .main-content{
-      max-width:1280px;
-      margin:30px auto 40px; 
-      padding:0 1.5rem;
+      max-width: 1280px;
+      margin: 0 auto 60px;
+      padding: 0 5%;
       position: relative;
       z-index: 10;
     }
     .section-header{
-      display:flex;
-      align-items:flex-end;
-      justify-content:space-between;
-      gap:1rem;
-      margin-bottom:1.5rem;
+      margin-bottom: 2rem;
+      text-align: center;
     }
-    .section-title h2{ font-size:var(--fs-xl); font-weight:900; color: var(--text-primary); }
-    .section-subtitle{ font-size:var(--fs-sm); color:var(--text-tertiary); margin-top:0.25rem; }
+    .section-title h2{ font-size:var(--fs-2xl); font-weight:800; color: var(--navy-900); letter-spacing: -0.02em;}
+    .section-subtitle{ font-size:var(--fs-sm); color:var(--text-secondary); margin-top:0.5rem; }
 
     /* --- ELEGANT SCHEDULE PANEL --- */
     .schedule-panel{
       background:var(--bg-elevated);
-      border-radius:var(--radius-2xl);
+      border-radius:var(--radius-xl);
       overflow:hidden;
       box-shadow:var(--shadow-md);
       border: 1px solid var(--border-light);
     }
     
-    /* Toolbar / Header Panel */
     .schedule-toolbar{
       display:flex;
       align-items:center;
       justify-content:space-between;
-      gap:1rem;
-      padding:1.25rem 1.5rem;
-      background: #ffffff;
+      gap:1.5rem;
+      padding:1.5rem;
+      background: var(--bg-elevated);
       border-bottom:1px solid var(--border-light);
       flex-wrap:wrap;
     }
@@ -246,49 +268,51 @@
       display:flex;
       align-items:center;
       gap:0.75rem;
-      font-weight:900;
+      font-weight:700;
       font-size:var(--fs-base);
-      color:var(--text-secondary);
+      color:var(--navy-800);
     }
-    .toolbar-left i { color: var(--primary-500); font-size: 1.2rem; }
+    .toolbar-left i { color: var(--sage-500); font-size: 1.25rem; }
 
     .filter-group{ display:flex; align-items:center; gap:1rem; flex-wrap:wrap; }
     .filter-item { position: relative; display: flex; align-items: center; }
-    .filter-item i { position: absolute; left: 12px; color: var(--text-tertiary); font-size: 0.85rem; pointer-events: none; }
+    .filter-item i { position: absolute; left: 1rem; color: var(--text-tertiary); font-size: 0.9rem; pointer-events: none; }
     .filter-item select, .filter-item input{
-      padding:0.6rem 1rem 0.6rem 2.2rem;
-      border-radius:var(--radius);
-      border:1px solid var(--border-regular);
-      background:var(--neutral-50);
-      font-size:var(--fs-sm);
-      font-weight: 600;
-      color: var(--text-secondary);
-      outline:none;
+      padding: 0.6rem 1rem 0.6rem 2.5rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-regular);
+      background: var(--neutral-50);
+      font-family: var(--font-sans);
+      font-size: var(--fs-sm);
+      font-weight: 500;
+      color: var(--navy-800);
+      outline: none;
       transition: all 0.2s;
       cursor: pointer;
+      appearance: auto;
     }
-    .filter-item select:hover, .filter-item input:hover { background: #ffffff; border-color: var(--primary-400); }
+    .filter-item select:hover, .filter-item input:hover { border-color: var(--sage-300); }
     .filter-item select:focus, .filter-item input:focus{
-      border-color:var(--primary-600); background: #ffffff; box-shadow:0 0 0 3px var(--primary-100);
+      border-color: var(--sage-500); background: #ffffff; box-shadow: 0 0 0 3px var(--sage-100);
     }
     .loading-badge{
       display:none; align-items:center; gap:0.5rem; padding:0.5rem 1rem;
-      border-radius:var(--radius); background:var(--primary-50); color:var(--primary-700);
-      font-size:var(--fs-sm); font-weight:800;
+      border-radius:var(--radius-sm); background:var(--lightblue-50); color:var(--lightblue-500);
+      font-size:var(--fs-sm); font-weight:600;
     }
     .loading-badge.show{ display:inline-flex; }
 
     /* --- REVISED SCHEDULE TABLE --- */
-    .schedule-shell{ transition:opacity 0.2s ease; background: var(--neutral-50); }
-    .schedule-shell.is-loading{ opacity:0.5; pointer-events:none; }
+    .schedule-shell{ transition:opacity 0.2s ease; background: var(--bg-main); }
+    .schedule-shell.is-loading{ opacity:0.6; pointer-events:none; }
 
     .schedule-table-wrap{
       width:100%;
       overflow-x:auto;
-      max-height: 650px; 
+      max-height: 600px; 
       overflow-y:auto;
       position:relative;
-      background: #ffffff;
+      background: var(--bg-elevated);
     }
     .schedule-table{
       width:max-content;
@@ -296,68 +320,63 @@
       border-collapse:collapse;
     }
 
-    /* Table Grid Lines */
     .schedule-table th, .schedule-table td {
-      border: 1px solid var(--border-regular);
-      padding: 0.6rem;
+      border: 1px solid var(--border-light);
+      padding: 0.75rem;
       vertical-align: top;
     }
 
-    /* Sticky Top Header (Rooms) */
     .schedule-table thead th{
       position:sticky;
       top: 0;
       z-index:20;
-      background: var(--neutral-200); 
-      color:var(--text-primary);
+      background: var(--neutral-50); 
+      color:var(--navy-800);
       padding:1rem 0.75rem;
       text-align:center;
-      box-shadow: 0 2px 4px -2px rgba(0,0,0,0.1);
+      box-shadow: 0 1px 0 var(--border-light);
     }
-    .room-name { font-size:var(--fs-sm); font-weight:900; }
-    .room-floor { font-size:var(--fs-xs); color:var(--text-tertiary); margin-top:0.25rem; font-weight: 600; }
+    .room-name { font-size:var(--fs-sm); font-weight:700; letter-spacing: -0.01em;}
+    .room-floor { font-size:var(--fs-xs); color:var(--text-tertiary); margin-top:0.25rem; font-weight: 500; }
 
     .schedule-cell{
-      min-width:160px; 
-      width:160px;
-      background:#ffffff;
+      min-width: 180px; 
+      width: 180px;
+      background: var(--bg-elevated);
       position: relative;
     }
-    .schedule-cell:hover { background: var(--neutral-50); }
 
-    .schedule-stack{ display:flex; flex-direction:column; gap:0.6rem; }
+    .schedule-stack{ display:flex; flex-direction:column; gap:0.75rem; }
 
     /* --- MODERN & CONTRAST SCHEDULE CARDS --- */
     .schedule-card{
       position:relative;
-      border-radius: 6px;
-      padding:0.75rem;
-      box-shadow: var(--shadow-card);
+      border-radius: var(--radius-sm);
+      padding: 0.75rem;
+      box-shadow: var(--shadow-sm);
       transition: all 0.2s;
       display: flex;
       flex-direction: column;
-      gap: 0.4rem;
+      gap: 0.5rem;
       cursor: pointer; 
+      border-left: 3px solid transparent;
     }
     .schedule-card:hover {
-      transform: translateY(-3px) scale(1.02);
+      transform: translateY(-2px);
       box-shadow: var(--shadow-md);
-      z-index: 2;
-      filter: brightness(0.95);
     }
 
-    .schedule-card.pbm{ background:var(--pbm-bg); border-left: 4px solid var(--pbm-border); border-right: 1px solid var(--pbm-bg); border-top: 1px solid var(--pbm-bg); border-bottom: 1px solid var(--pbm-bg);}
-    .schedule-card.mahasiswa{ background:var(--mhs-bg); border-left: 4px solid var(--mhs-border); border-right: 1px solid var(--mhs-bg); border-top: 1px solid var(--mhs-bg); border-bottom: 1px solid var(--mhs-bg);}
-    .schedule-card.booking_cepat{ background:var(--book-bg); border-left: 4px solid var(--book-border); border-right: 1px solid var(--book-bg); border-top: 1px solid var(--book-bg); border-bottom: 1px solid var(--book-bg);}
-    
-    /* REVISI WARNA UMUM */
-    .schedule-card.umum{ background:var(--umum-bg); border-left: 4px solid var(--umum-border); border-right: 1px solid var(--umum-bg); border-top: 1px solid var(--umum-bg); border-bottom: 1px solid var(--umum-bg);}
+    .schedule-card.pbm{ background:var(--pbm-bg); border-left-color: var(--pbm-border); border-right: 1px solid var(--border-light); border-top: 1px solid var(--border-light); border-bottom: 1px solid var(--border-light);}
+    .schedule-card.mahasiswa{ background:var(--mhs-bg); border-left-color: var(--mhs-border); border-right: 1px solid var(--border-light); border-top: 1px solid var(--border-light); border-bottom: 1px solid var(--border-light);}
+    .schedule-card.booking_cepat{ background:var(--book-bg); border-left-color: var(--book-border); border-right: 1px solid var(--border-light); border-top: 1px solid var(--border-light); border-bottom: 1px solid var(--border-light);}
+    .schedule-card.umum{ background:var(--umum-bg); border-left-color: var(--umum-border); border-right: 1px solid var(--border-light); border-top: 1px solid var(--border-light); border-bottom: 1px solid var(--border-light);}
 
     .schedule-head { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
     
     .schedule-time{
-      font-size:0.7rem;
-      font-weight:900;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
     }
     .schedule-card.pbm .schedule-time { color: var(--pbm-text); }
     .schedule-card.mahasiswa .schedule-time { color: var(--mhs-text); }
@@ -365,13 +384,13 @@
     .schedule-card.umum .schedule-time { color: var(--umum-text); }
 
     .schedule-type{
-      font-size:0.6rem;
-      font-weight:900;
-      text-transform:uppercase;
-      letter-spacing:0.04em;
-      padding: 0.2rem 0.4rem;
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.15rem 0.4rem;
       border-radius: 4px;
-      background: rgba(255,255,255,0.8);
+      background: rgba(255,255,255,0.7);
     }
     .schedule-card.pbm .schedule-type { color: var(--pbm-border); }
     .schedule-card.mahasiswa .schedule-type { color: var(--mhs-border); }
@@ -379,13 +398,13 @@
     .schedule-card.umum .schedule-type { color: var(--umum-border); }
 
     .schedule-course{
-      font-size:var(--fs-sm);
-      font-weight:800;
-      line-height:1.3;
-      display:-webkit-box;
-      -webkit-line-clamp:3;
-      -webkit-box-orient:vertical;
-      overflow:hidden;
+      font-size: var(--fs-sm);
+      font-weight: 600;
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
     }
     .schedule-card.pbm .schedule-course { color: var(--pbm-text); }
     .schedule-card.mahasiswa .schedule-course { color: var(--mhs-text); }
@@ -393,13 +412,13 @@
     .schedule-card.umum .schedule-course { color: var(--umum-text); }
 
     .click-hint {
-        font-size: 0.6rem;
-        font-weight: 600;
-        opacity: 0.6;
-        margin-top: 0.2rem;
+        font-size: 0.65rem;
+        font-weight: 500;
+        opacity: 0.7;
+        margin-top: 0.25rem;
         display: flex;
         align-items: center;
-        gap: 3px;
+        gap: 4px;
     }
     .schedule-card.pbm .click-hint { color: var(--pbm-text); }
     .schedule-card.mahasiswa .click-hint { color: var(--mhs-text); }
@@ -410,12 +429,12 @@
       text-align:center;
       padding:4rem 1rem;
       color:var(--text-tertiary);
-      font-size:var(--fs-base);
-      font-weight: 600;
-      background: #ffffff;
+      font-size:var(--fs-sm);
+      font-weight: 500;
+      background: var(--bg-elevated);
     }
     .schedule-empty-state i {
-        font-size: 2.5rem;
+        font-size: 2rem;
         color: var(--neutral-300);
         margin-bottom: 1rem;
         display: block;
@@ -423,19 +442,19 @@
 
     /* --- INFO FOOTER STRIP --- */
     .info-strip{
-      display:flex; flex-wrap:wrap; gap:1rem; padding:1rem 1.5rem;
-      background:#ffffff; border-top:1px solid var(--border-light);
+      display:flex; flex-wrap:wrap; gap:1.5rem; padding:1.25rem 1.5rem;
+      background:var(--neutral-50); border-top:1px solid var(--border-light);
     }
     .info-pill{
       display:inline-flex; align-items:center; gap:0.5rem;
-      font-size:var(--fs-sm); color:var(--text-secondary); font-weight:700;
+      font-size:var(--fs-sm); color:var(--navy-600); font-weight:600;
     }
-    .info-pill i { color: var(--primary-600); }
+    .info-pill i { color: var(--sage-500); }
 
     /* --- MODAL POP-UP STYLES --- */
     .modal-overlay {
         position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-        background: rgba(15, 23, 42, 0.6);
+        background: rgba(15, 23, 42, 0.4);
         backdrop-filter: blur(4px);
         z-index: 9999;
         display: flex; align-items: center; justify-content: center;
@@ -446,11 +465,11 @@
     .modal-overlay.active { opacity: 1; visibility: visible; }
     
     .modal-content {
-        background: #ffffff;
+        background: var(--bg-elevated);
         width: 100%; max-width: 450px;
         border-radius: var(--radius-xl);
         box-shadow: var(--shadow-lg);
-        transform: translateY(20px) scale(0.95);
+        transform: translateY(20px) scale(0.98);
         transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         overflow: hidden;
         position: relative;
@@ -463,7 +482,7 @@
         border-bottom: 1px solid var(--border-light);
         background: var(--neutral-50);
     }
-    .modal-header h3 { font-size: var(--fs-md); font-weight: 900; color: var(--text-primary); margin: 0; }
+    .modal-header h3 { font-size: var(--fs-base); font-weight: 700; color: var(--navy-800); margin: 0; }
     .modal-close {
         background: transparent; border: none;
         color: var(--text-tertiary); font-size: 1.25rem;
@@ -471,13 +490,13 @@
         display: flex; align-items: center; justify-content: center;
         width: 32px; height: 32px; border-radius: 50%;
     }
-    .modal-close:hover { color: var(--text-primary); background: var(--neutral-200); }
+    .modal-close:hover { color: var(--navy-900); background: var(--neutral-200); }
 
     .modal-body { padding: 1.5rem; }
     
     .modal-badge {
-        display: inline-block; padding: 0.3rem 0.75rem;
-        border-radius: 999px; font-size: var(--fs-xs); font-weight: 900;
+        display: inline-block; padding: 0.25rem 0.75rem;
+        border-radius: 999px; font-size: var(--fs-xs); font-weight: 700;
         text-transform: uppercase; letter-spacing: 0.05em;
         margin-bottom: 1rem;
     }
@@ -486,59 +505,59 @@
     .modal-badge.booking_cepat { background: var(--book-bg); color: var(--book-border); border: 1px solid var(--book-border); }
     .modal-badge.umum { background: var(--umum-bg); color: var(--umum-border); border: 1px solid var(--umum-border); }
 
-    .modal-course { font-size: var(--fs-lg); font-weight: 900; color: var(--text-primary); margin-bottom: 1.25rem; line-height: 1.3; }
+    .modal-course { font-size: var(--fs-lg); font-weight: 700; color: var(--navy-900); margin-bottom: 1.5rem; line-height: 1.3; }
     
     .modal-detail-row {
         display: flex; align-items: flex-start; gap: 1rem;
-        margin-bottom: 1rem; padding-bottom: 1rem;
-        border-bottom: 1px dashed var(--border-regular);
+        margin-bottom: 1.25rem; padding-bottom: 1.25rem;
+        border-bottom: 1px solid var(--border-light);
     }
     .modal-detail-row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
     
     .modal-icon {
-        width: 40px; height: 40px; border-radius: 10px;
-        background: var(--primary-50); color: var(--primary-600);
+        width: 40px; height: 40px; border-radius: var(--radius-sm);
+        background: var(--sage-50); color: var(--sage-500);
         display: flex; align-items: center; justify-content: center;
-        font-size: 1.1rem; flex-shrink: 0;
+        font-size: 1rem; flex-shrink: 0;
     }
-    .modal-info h5 { font-size: var(--fs-xs); color: var(--text-tertiary); font-weight: 700; text-transform: uppercase; margin-bottom: 0.2rem; }
-    .modal-info p { font-size: var(--fs-base); color: var(--text-primary); font-weight: 600; margin: 0; }
+    .modal-info h5 { font-size: var(--fs-xs); color: var(--text-tertiary); font-weight: 600; text-transform: uppercase; margin-bottom: 0.25rem; letter-spacing: 0.02em; }
+    .modal-info p { font-size: var(--fs-sm); color: var(--navy-800); font-weight: 600; margin: 0; }
 
     /* --- GUIDES (PANDUAN) --- */
-    .guide-wrap{ margin-top:2.5rem; }
-    .guide-title { font-size: var(--fs-lg); font-weight: 900; margin-bottom: 1.5rem; text-align: center; }
+    .guide-wrap{ margin-top: 4rem; }
+    .guide-title { font-size: var(--fs-xl); font-weight: 800; margin-bottom: 2rem; text-align: center; color: var(--navy-900); }
     .guide-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:1.5rem; }
     .step{
-      background:#ffffff; border:1px solid var(--border-light);
-      border-radius:var(--radius-2xl); padding:1.5rem; text-align: center;
-      transition: transform 0.3s, box-shadow 0.3s;
+      background: var(--bg-elevated); border:1px solid var(--border-light);
+      border-radius: var(--radius-xl); padding:2rem 1.5rem; text-align: center;
+      transition: transform 0.2s, box-shadow 0.2s;
     }
-    .step:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); border-color: var(--primary-300); }
+    .step:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); border-color: var(--sage-300); }
     .step-icon{
-      width:3.5rem; height:3.5rem; border-radius:50%; margin: 0 auto 1rem;
+      width: 4rem; height: 4rem; border-radius: 50%; margin: 0 auto 1.25rem;
       display:flex; align-items:center; justify-content:center;
-      background:var(--primary-50); color:var(--primary-600); font-size: 1.5rem;
+      background: var(--sage-50); color: var(--sage-700); font-size: 1.5rem;
     }
-    .step-title{ font-weight:900; font-size:var(--fs-base); color: var(--text-primary); margin-bottom: 0.5rem; }
-    .step-desc{ color:var(--text-tertiary); font-size:var(--fs-sm); line-height: 1.5; font-weight: 500; }
+    .step-title{ font-weight: 700; font-size:var(--fs-md); color: var(--navy-800); margin-bottom: 0.75rem; }
+    .step-desc{ color:var(--text-secondary); font-size:var(--fs-sm); line-height: 1.6; font-weight: 400; }
 
     /* --- FOOTER --- */
-    .footer{ background:#ffffff; border-top:1px solid var(--border-light); padding:3rem 1.5rem 1.5rem; margin-top: 4rem; }
-    .footer-content{ max-width:1240px; margin:0 auto; display:grid; grid-template-columns:2fr repeat(3,1fr); gap:2rem; }
-    .footer-about p{ margin-top:1rem; font-size:var(--fs-sm); color:var(--text-tertiary); line-height: 1.6; font-weight: 500;}
-    .footer-links h4{ font-size:var(--fs-sm); font-weight:900; color: var(--text-primary); margin-bottom:1rem; }
+    .footer{ background: var(--bg-elevated); border-top:1px solid var(--border-light); padding: 4rem 5% 2rem; margin-top: 5rem; }
+    .footer-content{ max-width: 1280px; margin:0 auto; display:grid; grid-template-columns: 2fr repeat(3,1fr); gap: 2.5rem; }
+    .footer-about p{ margin-top:1rem; font-size:var(--fs-sm); color:var(--text-secondary); line-height: 1.6; font-weight: 400;}
+    .footer-links h4{ font-size:var(--fs-base); font-weight:700; color: var(--navy-900); margin-bottom:1.25rem; }
     .footer-links ul{ list-style:none; }
     .footer-links li{ margin-bottom:0.75rem; }
-    .footer-links a{ color:var(--text-tertiary); text-decoration:none; font-size:var(--fs-sm); font-weight: 500; transition: color 0.2s; }
-    .footer-links a:hover{ color:var(--primary-600); }
+    .footer-links a, .footer-links span{ color:var(--text-secondary); text-decoration:none; font-size:var(--fs-sm); font-weight: 400; transition: color 0.2s; }
+    .footer-links a:hover{ color: var(--sage-700); }
     .footer-bottom{
-      max-width:1240px; margin:3rem auto 0; padding-top:1.5rem;
+      max-width: 1280px; margin:4rem auto 0; padding-top:1.5rem;
       border-top:1px solid var(--border-light); text-align:center;
-      font-size:var(--fs-sm); color:var(--text-tertiary); font-weight: 500;
+      font-size:var(--fs-sm); color:var(--text-tertiary); font-weight: 400;
     }
 
     /* --- ANIMATIONS --- */
-    .reveal{ opacity:0; transform:translateY(20px); transition:opacity 0.6s ease-out, transform 0.6s ease-out; }
+    .reveal{ opacity:0; transform:translateY(15px); transition:opacity 0.5s ease-out, transform 0.5s ease-out; }
     .reveal.visible{ opacity:1; transform:translateY(0); }
     .reveal.delay-1{ transition-delay:0.1s; }
     .reveal.delay-2{ transition-delay:0.2s; }
@@ -549,24 +568,22 @@
       .footer-content{ grid-template-columns:repeat(2, 1fr); }
     }
     @media (max-width: 768px){
-      .app-navbar { padding: 0 1rem; }
-      .hero-title{ font-size:1.75rem; }
       .hero-content { padding: 80px 1rem 2rem; }
-      .main-content{ margin-top: 20px; padding: 0 1rem; }
+      .main-content{ padding: 0 1rem; }
       
-      .schedule-toolbar { flex-direction: column; align-items: flex-start; }
+      .schedule-toolbar { flex-direction: column; align-items: flex-start; gap: 1rem; }
       .filter-group { width: 100%; flex-direction: column; align-items: stretch; gap: 0.75rem; }
       .filter-item { width: 100%; }
       .filter-item select, .filter-item input { width: 100%; }
       
-      .schedule-cell { min-width: 140px; width: 140px; }
+      .schedule-cell { min-width: 150px; width: 150px; }
       .schedule-table thead th { padding: 0.75rem 0.5rem; }
 
       .guide-grid{ grid-template-columns:1fr; }
       .footer-content{ grid-template-columns:1fr; }
       
       .hero-nav-pills { gap: 0.5rem; }
-      .nav-pill { padding: 0.6rem 1rem; font-size: var(--fs-xs); }
+      .nav-pill { padding: 0.6rem 1.2rem; font-size: var(--fs-xs); }
     }
     </style>
 </head>
@@ -602,7 +619,7 @@
               return 'booking_cepat';
           }
 
-          return 'umum'; // Fallback menjadi umum agar warna ungunya masuk
+          return 'umum';
       }
   }
 @endphp
@@ -612,12 +629,12 @@
 
   <div class="hero-content">
     <h1 class="hero-title reveal">
-      Pinjam Ruangan<br>
-      <span>Lebih Cepat & Praktis</span>
+      Peminjaman Ruangan<br>
+      <span>IDE LPKIA</span>
     </h1>
 
     <p class="hero-desc reveal delay-1">
-      Sistem manajemen penggunaan ruang terpadu Institut Digital Ekonomi LPKIA. Pantau ketersediaan, jadwal, dan ajukan peminjaman secara realtime.
+      Sistem manajemen penggunaan ruang terpadu. Pantau ketersediaan, jadwal kegiatan, dan ajukan peminjaman secara responsif.
     </p>
 
     <div class="hero-nav-pills reveal delay-2">
@@ -628,7 +645,7 @@
         <i class="fa-solid fa-layer-group"></i> Ajuan Peminjaman
       </a>
       <a href="{{ route('history.index') }}" class="nav-pill">
-        <i class="fa-solid fa-clock-rotate-left"></i>Status Pengajuan
+        <i class="fa-solid fa-clock-rotate-left"></i> Status Pengajuan
       </a>
     </div>
     
@@ -639,7 +656,7 @@
     <div class="section-header reveal">
       <div class="section-title">
         <h2>Timeline Ruangan</h2>
-        <p class="section-subtitle">Tampilan interaktif. Klik pada jadwal untuk melihat detail lengkap dosen dan kelas.</p>
+        <p class="section-subtitle">Tampilan interaktif. Klik jadwal spesifik untuk melihat detail kegiatan secara komprehensif.</p>
       </div>
     </div>
 
@@ -685,7 +702,7 @@
                     <div class="room-floor">Lt. {{ $room->floor ? $room->floor : '-' }}</div>
                   </th>
                 @empty
-                  <th style="font-weight:600; color:var(--text-tertiary);">Ruangan Tidak Ditemukan</th>
+                  <th style="font-weight:500; color:var(--text-tertiary);">Ruangan Tidak Ditemukan</th>
                 @endforelse
               </tr>
             </thead>
@@ -694,7 +711,6 @@
                 <tr>
                   @foreach($rooms as $room)
                     @php
-                      // Logika untuk menggabungkan event dan mengurutkan berdasarkan jam mulai
                       $roomItemsList = [];
                       $roomItemsMap = [];
                       
@@ -702,7 +718,6 @@
                           $key = $room->id . '|' . $slot['start'] . '|' . $slot['end'];
                           if(isset($scheduleMap[$key])) {
                               foreach($scheduleMap[$key] as $it) {
-                                  // Gunakan ID unik, atau kombinasikan title+start+end agar tidak duplikat
                                   $uniqueKey = isset($it['id']) ? $it['id'] : ($it['title'] . '_' . $it['start_time'] . '_' . $it['end_time']);
                                   
                                   if(!isset($roomItemsMap[$uniqueKey])) {
@@ -714,7 +729,6 @@
                           }
                       }
 
-                      // Mengurutkan jadwal dari waktu paling pagi ke sore
                       usort($roomItemsList, function($a, $b) {
                           return strcmp($a['start_time'], $b['start_time']);
                       });
@@ -761,7 +775,7 @@
                   <td colspan="1">
                     <div class="schedule-empty-state">
                       <i class="fa-regular fa-calendar-xmark"></i>
-                      Tidak ada aktivitas untuk filter tanggal & lantai ini.
+                      Tidak ada aktivitas pada tanggal dan lantai yang dipilih.
                     </div>
                   </td>
                 </tr>
@@ -778,7 +792,7 @@
             <i class="fa-solid fa-layer-group"></i> {{ $selectedLantai == 'all' ? 'Semua Lantai' : 'Lantai ' . $selectedLantai }}
           </div>
           <div class="info-pill">
-            <i class="fa-solid fa-door-open"></i> {{ count($rooms) }} Ruangan Tersedia
+            <i class="fa-solid fa-door-open"></i> {{ count($rooms) }} Ruang
           </div>
         </div>
       </div>
@@ -790,19 +804,19 @@
         <div class="step">
           <div class="step-icon"><i class="fa-solid fa-magnifying-glass-location"></i></div>
           <div class="step-title">1. Cari Ruangan</div>
-          <div class="step-desc">Gunakan filter tanggal dan lantai untuk melihat ketersediaan slot kosong pada tabel jadwal di atas.</div>
+          <div class="step-desc">Gunakan filter untuk memeriksa ketersediaan slot waktu yang kosong pada tabel timeline.</div>
         </div>
 
         <div class="step">
           <div class="step-icon"><i class="fa-regular fa-pen-to-square"></i></div>
           <div class="step-title">2. Ajukan Form</div>
-          <div class="step-desc">Klik tombol daftar ruangan, pilih ruang yang kosong, dan isi form tujuan peminjaman Anda dengan lengkap.</div>
+          <div class="step-desc">Pilih ruangan tujuan dan lengkapi form pengajuan peminjaman di menu yang tersedia.</div>
         </div>
 
         <div class="step">
           <div class="step-icon"><i class="fa-solid fa-check-double"></i></div>
-          <div class="step-title">3. Tunggu Verifikasi</div>
-          <div class="step-desc">Pengajuan akan dikonfirmasi oleh admin. Anda bisa menggunakan ruangan setelah disetujui dalam sistem.</div>
+          <div class="step-title">3. Verifikasi</div>
+          <div class="step-desc">Tunggu konfirmasi admin. Ruangan siap digunakan setelah status disetujui dalam sistem.</div>
         </div>
       </div>
     </div>
@@ -811,11 +825,11 @@
 <footer class="footer">
   <div class="footer-content">
     <div class="footer-about">
-      <div style="display:flex;align-items:center;gap:.6rem;">
-        <i class="fa-solid fa-layer-group" style="font-size:1.5rem; color:var(--primary-600);"></i>
-        <div style="font-weight:900; font-size: 1.1rem; color: var(--text-primary);">Peminjaman Ruangan LPKIA</div>
+      <div style="display:flex;align-items:center;gap:.75rem;">
+        <i class="fa-solid fa-layer-group" style="font-size:1.5rem; color:var(--sage-500);"></i>
+        <div style="font-weight:800; font-size: 1.125rem; color: var(--navy-900);">Peminjaman Ruangan</div>
       </div>
-      <p>Sistem manajemen dan peminjaman fasilitas ruang resmi Institut Digital Ekonomi LPKIA. Mempermudah penjadwalan PBM dan kegiatan kemahasiswaan secara real-time.</p>
+      <p>Sistem terpadu manajemen dan peminjaman fasilitas ruang Institut Digital Ekonomi LPKIA. Beroperasi secara real-time untuk kebutuhan akademis.</p>
     </div>
 
     <div class="footer-links">
@@ -823,15 +837,15 @@
       <ul>
         <li><a href="{{ route('ruangan.index') }}">Daftar Ruangan</a></li>
         <li><a href="#jadwal-ruangan">Cek Jadwal</a></li>
-        <li><a href="#">Status Peminjaman</a></li>
+        <li><a href="{{ route('history.index') }}">Status Peminjaman</a></li>
       </ul>
     </div>
 
     <div class="footer-links">
       <h4>Bantuan</h4>
       <ul>
-        <li><a href="#">Panduan Lengkap</a></li>
-        <li><a href="#">Kebijakan Penggunaan</a></li>
+        <li><a href="#">Panduan Sistem</a></li>
+        <li><a href="#">Kebijakan Peminjaman</a></li>
         <li><a href="#">FAQ</a></li>
       </ul>
     </div>
@@ -839,15 +853,15 @@
     <div class="footer-links">
       <h4>Hubungi Kami</h4>
       <ul>
-        <li><i class="fa-regular fa-envelope" style="width:16px;"></i> admin.ruang@lpkia.ac.id</li>
-        <li><i class="fa-regular fa-clock" style="width:16px;"></i> Senin - Jumat (08:00 - 17:00)</li>
-        <li><i class="fa-solid fa-location-dot" style="width:16px;"></i> Kampus IDE LPKIA Bandung</li>
+        <li><span><i class="fa-regular fa-envelope" style="width:20px;"></i> admin.ruang@lpkia.ac.id</span></li>
+        <li><span><i class="fa-regular fa-clock" style="width:20px;"></i> Senin - Jumat (08:00 - 17:00)</span></li>
+        <li><span><i class="fa-solid fa-location-dot" style="width:20px;"></i> Kampus IDE LPKIA</span></li>
       </ul>
     </div>
   </div>
 
   <div class="footer-bottom">
-    <p>&copy; {{ date('Y') }} Institut Digital Ekonomi LPKIA. Hak Cipta Dilindungi.</p>
+    <p>&copy; {{ date('Y') }} Institut Digital Ekonomi LPKIA. by haikal</p>
   </div>
 </footer>
 
@@ -859,13 +873,13 @@
         </div>
         <div class="modal-body">
             <span id="modalType" class="modal-badge pbm">PBM</span>
-            <h4 id="modalCourse" class="modal-course">Nama Mata Kuliah / Kegiatan</h4>
+            <h4 id="modalCourse" class="modal-course">-</h4>
             
             <div class="modal-detail-row">
                 <div class="modal-icon"><i class="fa-regular fa-clock"></i></div>
                 <div class="modal-info">
-                    <h5>Waktu Pelaksanaan</h5>
-                    <p id="modalTime">08:00 - 10:00</p>
+                    <h5>Waktu</h5>
+                    <p id="modalTime">-</p>
                 </div>
             </div>
 
@@ -873,7 +887,7 @@
                 <div class="modal-icon"><i class="fa-solid fa-door-open"></i></div>
                 <div class="modal-info">
                     <h5>Ruangan & Kelas</h5>
-                    <p><span id="modalRoom">Ruang A</span> &bull; <span id="modalClass">Kelas B</span></p>
+                    <p><span id="modalRoom">-</span> &bull; <span id="modalClass">-</span></p>
                 </div>
             </div>
 
@@ -881,7 +895,7 @@
                 <div class="modal-icon"><i class="fa-solid fa-user-tie"></i></div>
                 <div class="modal-info">
                     <h5>Dosen / PIC</h5>
-                    <p id="modalLecturer">Nama Dosen</p>
+                    <p id="modalLecturer">-</p>
                 </div>
             </div>
         </div>
@@ -891,7 +905,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   
-  // Efek Transisi Navbar saat di-scroll
+  // Transisi Navbar
   var navbar = document.getElementById('appNavbar');
   if(navbar) {
     window.addEventListener('scroll', function() {
@@ -900,7 +914,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  // Animasi Muncul (Reveal) 
+  // Animasi Muncul
   var els = document.querySelectorAll('.reveal');
   var io = new IntersectionObserver(function(entries) {
     entries.forEach(function(e) {
@@ -909,21 +923,21 @@ document.addEventListener('DOMContentLoaded', function () {
   }, { threshold: 0.1 });
   els.forEach(function(el) { io.observe(el); });
 
-  // Parallax ringan Background
+  // Parallax
   var bg = document.getElementById('heroBg');
   var ticking = false;
   window.addEventListener('scroll', function(){
     if (!ticking && bg) {
       window.requestAnimationFrame(function(){
         var y = window.scrollY || 0;
-        bg.style.transform = 'scale(1.05) translateY(' + (y * 0.15) + 'px)';
+        bg.style.transform = 'translateY(' + (y * 0.15) + 'px)';
         ticking = false;
       });
       ticking = true;
     }
   }, { passive: true });
 
-  // --- LOGIKA MODAL POP-UP ---
+  // Logika Modal
   var modal = document.getElementById('scheduleModal');
   var btnClose = document.getElementById('closeModal');
   
@@ -978,7 +992,7 @@ document.addEventListener('DOMContentLoaded', function () {
       });
   }
 
-  // --- LOGIKA AJAX FILTER JADWAL ---
+  // AJAX Filter Jadwal
   var tanggal = document.getElementById('tanggal');
   var lantai = document.getElementById('lantai');
   var container = document.getElementById('scheduleContainer');
@@ -1001,7 +1015,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (rawType.indexOf('mahasiswa') !== -1 || haystack.indexOf('mahasiswa') !== -1 || haystack.indexOf('bem') !== -1) return 'mahasiswa';
     if (rawType.indexOf('booking_cepat') !== -1 || (haystack.indexOf('booking') !== -1 && haystack.indexOf('cepat') !== -1)) return 'booking_cepat';
     
-    return 'umum'; // Sama dengan backend, fallback ke umum
+    return 'umum';
   }
 
   function getTypeLabel(type) {
@@ -1061,7 +1075,7 @@ document.addEventListener('DOMContentLoaded', function () {
         html += '<th><div class="room-name">' + escapeHtml(room.name) + '</div><div class="room-floor">Lt. ' + escapeHtml(room.floor || '-') + '</div></th>';
       });
     } else {
-      html += '<th style="font-weight:600; color:var(--text-tertiary);">Ruangan Tidak Ditemukan</th>';
+      html += '<th style="font-weight:500; color:var(--text-tertiary);">Ruangan Tidak Ditemukan</th>';
     }
     html += '</tr></thead><tbody>';
 
@@ -1071,7 +1085,6 @@ document.addEventListener('DOMContentLoaded', function () {
         var roomItemsMap = {};
         var roomItemsList = [];
         
-        // Gabungkan semua item yang terpotong menjadi 1 di setiap ruangan
         timeSlots.forEach(function(slot) {
           var key = room.id + '|' + slot.start + '|' + slot.end;
           var items = scheduleMap[key] || [];
@@ -1084,16 +1097,15 @@ document.addEventListener('DOMContentLoaded', function () {
           });
         });
 
-        // Urutkan kartu berdasarkan jam mulai
         roomItemsList.sort(function(a, b) {
-           return a.start_time.localeCompare(b.start_time);
+            return String(a.start_time).localeCompare(String(b.start_time));
         });
 
         html += '<td class="schedule-cell">' + renderItems(roomItemsList, room.name) + '</td>';
       });
       html += '</tr>';
     } else {
-      html += '<tr><td colspan="1"><div class="schedule-empty-state"><i class="fa-regular fa-calendar-xmark"></i> Tidak ada aktivitas untuk filter tanggal & lantai ini.</div></td></tr>';
+      html += '<tr><td colspan="1"><div class="schedule-empty-state"><i class="fa-regular fa-calendar-xmark"></i> Tidak ada aktivitas pada tanggal dan lantai yang dipilih.</div></td></tr>';
     }
 
     html += '</tbody></table></div>';
@@ -1101,7 +1113,7 @@ document.addEventListener('DOMContentLoaded', function () {
     html += '<div class="info-strip">';
     html += '<div class="info-pill"><i class="fa-regular fa-calendar"></i> ' + escapeHtml(tanggalLabel) + '</div>';
     html += '<div class="info-pill"><i class="fa-solid fa-layer-group"></i> ' + escapeHtml(selectedLantai === 'all' ? 'Semua Lantai' : 'Lantai ' + selectedLantai) + '</div>';
-    html += '<div class="info-pill"><i class="fa-solid fa-door-open"></i> ' + escapeHtml(totalRooms) + ' Ruangan Tersedia</div>';
+    html += '<div class="info-pill"><i class="fa-solid fa-door-open"></i> ' + escapeHtml(totalRooms) + ' Ruang</div>';
     html += '</div>';
 
     return html;

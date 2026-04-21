@@ -62,13 +62,14 @@ class QuickBookingController extends Controller
             ->where('start_time', '<=', $end)
             ->where('end_time', '>=', $start);
 
-        // 2) PBM OCCURRENCES (approved/draft) + join template untuk judul & note
+        // 2) PBM OCCURRENCES (approved/rescheduled/draft) + join template
+        // PERBAIKAN 1: Tambahkan '[PINDAHAN]' jika status rescheduled
         $pbm = DB::table('pbm_occurrences as o')
             ->leftJoin('pbm_templates as t', 't.id', '=', 'o.pbm_id')
             ->selectRaw("
                 o.id as id,
                 o.room_id as room_id,
-                COALESCE(t.mata_kuliah, 'PBM') as title,
+                CONCAT(COALESCE(t.mata_kuliah, 'PBM'), CASE WHEN o.status = 'rescheduled' THEN ' [PINDAHAN]' ELSE '' END) as title,
                 CONCAT(
                     CASE WHEN t.kelas IS NULL OR t.kelas = '' THEN '' ELSE CONCAT('Kelas: ', t.kelas) END,
                     CASE
@@ -85,16 +86,17 @@ class QuickBookingController extends Controller
                 'pbm_occurrences' as source_table
             ")
             ->where('o.room_id', $roomId)
-            ->whereIn('o.status', ['draft', 'approved'])
+            ->whereIn('o.status', ['draft', 'approved', 'rescheduled'])
             ->where('o.start_time', '<=', $end)
             ->where('o.end_time', '>=', $start);
 
-        // 3) BORROW REQUESTS (tampilkan yang menunggu & disetujui untuk info di kalender)
+        // 3) BORROW REQUESTS (menunggu & disetujui)
+        // PERBAIKAN 2: Berikan prefix [PROSES] atau [ACC] agar admin jelas
         $borrow = DB::table('borrow_requests')
             ->selectRaw("
                 id,
                 room_id,
-                CONCAT('Peminjaman: ', COALESCE(org_name, responsible_name)) as title,
+                CONCAT(CASE WHEN status = 'menunggu' THEN '[PROSES] ' ELSE '[ACC] ' END, 'Peminjaman: ', COALESCE(org_name, responsible_name)) as title,
                 CONCAT('PJ: ', responsible_name, ' | Email: ', email, ' | Telp: ', phone) as note,
                 start_time,
                 end_time,
@@ -147,12 +149,13 @@ class QuickBookingController extends Controller
             ->where('start_time', '>=', $fromDT)
             ->where('start_time', '<=', $toDT);
 
+        // PERBAIKAN 3: Sinkron dengan logika read status rescheduled
         $pbm = DB::table('pbm_occurrences as o')
             ->leftJoin('pbm_templates as t', 't.id', '=', 'o.pbm_id')
             ->selectRaw("
                 o.id as id,
                 o.room_id as room_id,
-                COALESCE(t.mata_kuliah, 'PBM') as title,
+                CONCAT(COALESCE(t.mata_kuliah, 'PBM'), CASE WHEN o.status = 'rescheduled' THEN ' [PINDAHAN]' ELSE '' END) as title,
                 CONCAT(
                     CASE WHEN t.kelas IS NULL OR t.kelas = '' THEN '' ELSE CONCAT('Kelas: ', t.kelas) END,
                     CASE
@@ -169,15 +172,16 @@ class QuickBookingController extends Controller
                 'pbm_occurrences' as source_table
             ")
             ->where('o.room_id', $roomId)
-            ->whereIn('o.status', ['draft', 'approved'])
+            ->whereIn('o.status', ['draft', 'approved', 'rescheduled'])
             ->where('o.start_time', '>=', $fromDT)
             ->where('o.start_time', '<=', $toDT);
 
+        // PERBAIKAN 4: Sinkron read status mahasiswa
         $borrow = DB::table('borrow_requests')
             ->selectRaw("
                 id,
                 room_id,
-                CONCAT('Peminjaman: ', COALESCE(org_name, responsible_name)) as title,
+                CONCAT(CASE WHEN status = 'menunggu' THEN '[PROSES] ' ELSE '[ACC] ' END, 'Peminjaman: ', COALESCE(org_name, responsible_name)) as title,
                 CONCAT('PJ: ', responsible_name, ' | Email: ', email, ' | Telp: ', phone) as note,
                 start_time,
                 end_time,
@@ -220,18 +224,20 @@ class QuickBookingController extends Controller
         if ($q1->exists()) return true;
 
         // 2) pbm_occurrences
+        // PERBAIKAN 5: Baca jadwal yang sudah di-reschedule agar Admin tidak menabrak jadwal pindahan
         $q2 = DB::table('pbm_occurrences')
             ->where('room_id', $roomId)
-            ->whereIn('status', ['draft', 'approved'])
+            ->whereIn('status', ['draft', 'approved', 'rescheduled'])
             ->where('start_time', '<', $endDT)
             ->where('end_time', '>', $startDT);
 
         if ($q2->exists()) return true;
 
-        // 3) borrow_requests (PERBAIKAN: Hanya cek yang sudah 'disetujui')
+        // 3) borrow_requests
+        // PERBAIKAN 6: Jangan biarkan Admin menabrak pengajuan mahasiswa yang sedang antre (menunggu)
         $q3 = DB::table('borrow_requests')
             ->where('room_id', $roomId)
-            ->whereIn('status', ['disetujui']) 
+            ->whereIn('status', ['menunggu', 'disetujui']) 
             ->where('start_time', '<', $endDT)
             ->where('end_time', '>', $startDT);
 
@@ -344,7 +350,7 @@ class QuickBookingController extends Controller
             if ($this->hasConflict($roomId, $startDT, $endDT, null)) {
                 return response()->json([
                     'ok' => false,
-                    'message' => 'Bentrok dengan jadwal lain (PBM / Peminjaman ACC / Booking Admin)'
+                    'message' => 'Bentrok dengan jadwal lain (PBM Pindahan / Peminjaman Mahasiswa / Booking)'
                 ]);
             }
 
@@ -411,7 +417,7 @@ class QuickBookingController extends Controller
             if ($this->hasConflict($roomId, $startDT, $endDT, $id)) {
                 return response()->json([
                     'ok' => false,
-                    'message' => 'Bentrok jadwal (PBM / Peminjaman ACC / Booking Admin)'
+                    'message' => 'Bentrok jadwal (PBM Pindahan / Peminjaman Mahasiswa / Booking Admin)'
                 ]);
             }
 

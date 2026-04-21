@@ -41,6 +41,27 @@ class BorrowRequest extends Model
     ];
 
     /**
+     * Boot the model.
+     * Event otomatis yang berjalan di latar belakang.
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        // Event 'updating' akan dieksekusi SEBELUM data di-save() ke database
+        static::updating(function ($model) {
+            // Jika status kema baru saja diubah, dan nilainya menjadi 'ditolak'
+            if ($model->isDirty('kema_status') && $model->kema_status === 'ditolak') {
+                // Jika status admin masih 'menunggu', maka otomatis tolak juga
+                if ($model->status === 'menunggu') {
+                    $model->status = 'ditolak';
+                    $model->admin_note = 'Otomatis ditolak sistem karena Kemahasiswaan telah menolak pengajuan.';
+                }
+            }
+        });
+    }
+
+    /**
      * Relasi ke Room (WAJIB kalau kamu pakai with('room') di controller Kema/Admin)
      */
     public function room()

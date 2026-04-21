@@ -160,7 +160,7 @@
       padding:10px 12px;
       border-radius:var(--radius2);
       border:1px solid var(--border);
-      background:#fff;
+      background:#ffffff;
       color:var(--text);
       text-decoration:none;
       font-weight:650;
@@ -173,18 +173,18 @@
 
     .btn:hover{
       transform:translateY(-1px);
-      background:#f8fafc;
+      background:#ffffff;
     }
 
     .btn-primary{
       background:linear-gradient(135deg, var(--primary), var(--primary2));
       border-color:transparent;
-      color:#fff;
+      color:#000000;
       box-shadow:0 14px 34px rgba(2, 132, 199,.18);
     }
 
     .btn-danger{
-      background:#fff;
+      background:#ffffff;
       color:#991b1b;
       border-color:var(--dangerBorder);
     }
@@ -586,10 +586,12 @@
       color:#334155;
     }
 
+    /* Action Group: Dibuat sejajar / tidak terpotong */
     .actionGroup{
       display:flex;
       gap:8px;
-      flex-wrap:wrap;
+      flex-wrap:nowrap;
+      align-items:center;
     }
 
     /* ===== Skeleton ===== */
@@ -836,18 +838,17 @@
                 <table>
                   <thead>
                     <tr>
-                      <th style="width:100px;">ID</th>
-                      <th style="width:150px;">Kode</th>
+                      <th style="width:160px;">Kode / Dibuat</th>
                       <th style="width:180px;">Ruangan</th>
                       <th style="width:220px;">Pemohon</th>
                       <th style="width:220px;">Jadwal</th>
                       <th style="width:150px;">Status KEMA</th>
-                      <th style="width:250px;">Aksi</th>
+                      <th style="width:280px;">Aksi</th>
                     </tr>
                   </thead>
                   <tbody id="tbody">
                     <tr>
-                      <td colspan="7" style="text-align:center; padding:22px; color:var(--muted); font-weight:600;">
+                      <td colspan="6" style="text-align:center; padding:22px; color:var(--muted); font-weight:600;">
                         <i class="fa-solid fa-circle-info"></i> Memuat data...
                       </td>
                     </tr>
@@ -929,8 +930,9 @@
       return `<span class="badge b-wait"><i class="fa-solid fa-hourglass-half"></i> Menunggu</span>`;
     }
 
-    async function safeFetch(url){
-      showOverlay();
+    // Menambahkan parameter isSilent agar fetch background tidak memunculkan overlay
+    async function safeFetch(url, isSilent = false){
+      if (!isSilent) showOverlay();
       try{
         const res = await fetch(url, {
           cache:'no-store',
@@ -940,7 +942,7 @@
         if (!res.ok || !json) throw new Error(json?.message || `Fetch gagal (${res.status})`);
         return json;
       } finally {
-        hideOverlay();
+        if (!isSilent) hideOverlay();
       }
     }
 
@@ -1025,13 +1027,12 @@
     function renderSkeleton(){
       const row = () => `
         <tr>
-          <td><div class="skeleton" style="width:64px"></div></td>
-          <td><div class="skeleton" style="width:110px"></div></td>
+          <td><div class="skeleton" style="width:120px"></div></td>
           <td><div class="skeleton" style="width:150px"></div></td>
           <td><div class="skeleton" style="width:180px"></div></td>
           <td><div class="skeleton" style="width:170px"></div></td>
           <td><div class="skeleton" style="width:110px"></div></td>
-          <td><div class="skeleton" style="width:180px;height:30px;border-radius:11px"></div></td>
+          <td><div class="skeleton" style="width:250px;height:30px;border-radius:11px"></div></td>
         </tr>
       `;
       tbody.innerHTML = row()+row()+row()+row()+row();
@@ -1061,18 +1062,30 @@
       const start = r.start_time ?? '-';
       const end   = r.end_time ?? '-';
       const st    = (r.kema_status || 'menunggu');
+      const created = r.created_at ?? '-';
 
       const isWait = String(st).toLowerCase() === 'menunggu';
 
+      // Setup URL untuk Buka Surat
+      let letterUrl = r.letter_file || '';
+      if (letterUrl && !letterUrl.startsWith('http')) {
+          letterUrl = letterUrl.startsWith('/') ? letterUrl : '/' + letterUrl;
+      }
+
+      const letterHtml = letterUrl 
+          ? `<a href="${letterUrl}" target="_blank" style="color:var(--primary); text-decoration:none; font-weight:700;"><i class="fa-solid fa-file-pdf"></i> Buka Surat Pengajuan</a>`
+          : `<span style="color:var(--muted)">Tidak ada surat yang dilampirkan</span>`;
+
       const html = `
         <div class="dl">
-          <div class="row"><div class="k">ID</div><div class="v">#${escapeHtml(id)}</div></div>
+          <div class="row"><div class="k">Pengajuan</div><div class="v">${escapeHtml(created)}</div></div>
           <div class="row"><div class="k">Kode</div><div class="v">${escapeHtml(code)}</div></div>
           <div class="row"><div class="k">Pemohon</div><div class="v">${escapeHtml(name)}<div class="v muted">${escapeHtml(email)}</div></div></div>
           <div class="row"><div class="k">Organisasi</div><div class="v">${escapeHtml(org)}</div></div>
           <div class="row"><div class="k">Ruangan</div><div class="v">${escapeHtml(room)}</div></div>
           <div class="row"><div class="k">Waktu</div><div class="v">${escapeHtml(start)}<div class="v muted">s/d ${escapeHtml(end)}</div></div></div>
           <div class="row"><div class="k">Status</div><div class="v">${badge(st)}</div></div>
+          <div class="row"><div class="k">Surat</div><div class="v">${letterHtml}</div></div>
 
           <div class="modalActions">
             ${isWait ? `
@@ -1117,34 +1130,41 @@
       });
     }
 
-    async function applyFilters(showToast=false){
+    // Menambahkan parameter isSilent agar pemanggilan polling background tidak menimpa UI / animasi loader
+    async function applyFilters(showToast = false, isSilent = false){
       const st = kemaStatus.value || 'menunggu';
       const df = (dateFrom.value || '').trim();
       const qq = (q.value || '').trim();
 
       if (!URL_LIST){
-        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:22px; color:var(--muted); font-weight:600;">Route <b>kema.pengajuan.list</b> belum dibuat.</td></tr>`;
+        if (!isSilent) tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:22px; color:var(--muted); font-weight:600;">Route <b>kema.pengajuan.list</b> belum dibuat.</td></tr>`;
         return;
       }
 
-      renderSkeleton();
-      meta.textContent = 'Memuat data...';
+      if (!isSilent) {
+        renderSkeleton();
+        meta.textContent = 'Memuat data...';
+      }
 
       const params = new URLSearchParams({ status: st, date: df, q: qq });
 
       let json;
       try{
-        json = await safeFetch(URL_LIST + '?' + params.toString());
+        json = await safeFetch(URL_LIST + '?' + params.toString(), isSilent);
       }catch(e){
-        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:22px; color:var(--muted); font-weight:600;">Gagal memuat data: ${escapeHtml(e.message)}</td></tr>`;
-        meta.textContent = 'Gagal';
+        if (!isSilent) {
+          tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:22px; color:var(--muted); font-weight:600;">Gagal memuat data: ${escapeHtml(e.message)}</td></tr>`;
+          meta.textContent = 'Gagal';
+        }
         if (showToast) toast('error', e.message);
         return;
       }
 
       if (!json || !json.ok){
-        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:22px; color:var(--muted); font-weight:600;">Gagal memuat data.</td></tr>`;
-        meta.textContent = 'Gagal';
+        if (!isSilent) {
+          tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:22px; color:var(--muted); font-weight:600;">Gagal memuat data.</td></tr>`;
+          meta.textContent = 'Gagal';
+        }
         if (showToast) toast('error', json?.message || 'Gagal memuat data');
         return;
       }
@@ -1162,7 +1182,7 @@
       });
 
       if (!items.length){
-        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:22px; color:var(--muted); font-weight:600;"><i class="fa-solid fa-circle-info"></i> Tidak ada data.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:22px; color:var(--muted); font-weight:600;"><i class="fa-solid fa-circle-info"></i> Tidak ada data.</td></tr>`;
         if (showToast) toast('info', 'Tidak ada data');
         return;
       }
@@ -1203,12 +1223,9 @@
 
         return `
           <tr>
-            <td>
-              <div class="mainText">#${escapeHtml(r.id)}</div>
-              <div class="subText">${escapeHtml(r.created_at || '')}</div>
-            </td>
             <td title="${escapeHtml(r.public_code)}">
               <div class="mainText">${escapeHtml(r.public_code)}</div>
+              <div class="subText">${escapeHtml(r.created_at || '')}</div>
             </td>
             <td title="${room}">
               <div class="mainText">${room}</div>
@@ -1264,7 +1281,12 @@
       typingTimer = setTimeout(()=>applyFilters(false), 300);
     });
 
+    // Panggil saat halaman pertama dimuat
     applyFilters(false);
+    
+    // AJAX Polling Interval (Update tabel secara silent setiap 15 detik)
+    setInterval(() => applyFilters(false, true), 1000); 
+
   </script>
 </body>
-</html>
+</html> 

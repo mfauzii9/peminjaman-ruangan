@@ -477,7 +477,7 @@
             <table id="unifiedTable">
               <thead>
                 <tr>
-                  <th class="sticky-left" style="width: 180px;">Pengajuan</th>
+                  <th class="sticky-left" style="width: 180px;">Dibuat</th>
                   <th style="width: 180px;">Ruangan</th>
                   <th style="min-width: 250px;">Kegiatan / Peminjam</th>
                   <th style="min-width: 200px;">Organisasi / Sumber</th>
@@ -595,12 +595,39 @@
         const newBlocks  = Number(data.blocks_total ?? 0);
         const newPbmOcc  = Number(data.pbm_occ_total ?? 0);
 
-        if (newPending > lastPending) showToast('Pengajuan Baru Masuk', `Menunggu: ${newPending} (sebelumnya ${lastPending})`, 'success');
-        if (newBlocks > lastBlocks)   showToast('Booking Cepat Diperbarui', `Total booking admin: ${newBlocks}`, 'warn');
-        if (newPbmOcc > lastPbmOcc)   showToast('Jadwal PBM Diperbarui', `Perubahan pada jadwal perkuliahan.`, 'info');
+        let hasChanges = false;
+
+        // Pengecekan status (toast hanya muncul jika bertambah)
+        // Auto reload tabel terpicu jika ada perubahan angka (tambah atau kurang)
+        if (newPending > lastPending) {
+          showToast('Pengajuan Baru Masuk', `Menunggu: ${newPending} (sebelumnya ${lastPending})`, 'success');
+          hasChanges = true;
+        } else if (newPending !== lastPending) {
+          hasChanges = true; // Angka berubah (misal admin selesai memproses)
+        }
+
+        if (newBlocks > lastBlocks) {
+          showToast('Booking Cepat Diperbarui', `Total booking admin: ${newBlocks}`, 'warn');
+          hasChanges = true;
+        } else if (newBlocks !== lastBlocks) {
+          hasChanges = true;
+        }
+
+        if (newPbmOcc > lastPbmOcc) {
+          showToast('Jadwal PBM Diperbarui', `Perubahan pada jadwal perkuliahan.`, 'info');
+          hasChanges = true;
+        } else if (newPbmOcc !== lastPbmOcc) {
+          hasChanges = true;
+        }
 
         setDot(newPending);
         lastPending = newPending; lastBlocks = newBlocks; lastPbmOcc = newPbmOcc;
+
+        // Jika ada perubahan data apapun, refresh tabel secara instan di belakang layar
+        if (hasChanges) {
+          applyFilters(lastMode.page || 1, {scroll: false});
+        }
+        
       } catch(e){}
     }
 
@@ -722,12 +749,17 @@
         const dtCreated = escapeHtml(r.created_at || '-');
 
         if (kind === 'request'){
-          const st = (r.status || '').toLowerCase();
+          let st = (r.status || '').toLowerCase();
+          let statusLabel = r.status || '-';
+
           let bClass = 'badge-warning', ico = 'fa-hourglass-half';
           if (st === 'disetujui') { bClass = 'badge-success'; ico='fa-circle-check'; }
           else if (st === 'ditolak') { bClass = 'badge-danger'; ico='fa-circle-xmark'; }
           else if (st === 'selesai') { bClass = 'badge-primary'; ico='fa-flag-checkered'; }
           else if (st === 'hangus') { bClass = 'badge-danger'; ico='fa-clock-rotate-left'; }
+
+          // Kapitalisasi huruf pertama untuk label
+          statusLabel = statusLabel.charAt(0).toUpperCase() + statusLabel.slice(1);
 
           const detailUrl = URL_CONFIRM_BASE + '/' + encodeURIComponent(r.id);
 
@@ -737,7 +769,7 @@
             <td><div class="fw-bold">${escapeHtml(r.title || '-')}</div><div class="text-sub"><i class="fa-solid fa-envelope"></i> ${escapeHtml(r.email || '-')}</div><div class="text-sub"><i class="fa-solid fa-phone"></i> ${escapeHtml(r.phone || '-')}</div></td>
             <td><div class="fw-bold">${escapeHtml(r.org_name || '-')}</div><div class="text-sub"><span style="padding:2px 6px; background:#eff6ff; border-radius:4px; color:#1e40af">Pengajuan Mhs</span></div></td>
             <td><div class="fw-bold">${escapeHtml(r.start_time || '-')}</div><div class="text-sub">s/d ${escapeHtml(r.end_time || '-')}</div></td>
-            <td><span class="badge ${bClass}"><i class="fa-solid ${ico}"></i> ${escapeHtml(r.status || '-')}</span></td>
+            <td><span class="badge ${bClass}"><i class="fa-solid ${ico}"></i> ${escapeHtml(statusLabel)}</span></td>
             <td class="sticky-right" style="text-align:center;"><a class="btn btn-primary btn-action" href="${detailUrl}"><i class="fa-solid fa-arrow-right"></i> Proses</a></td>
           </tr>`;
         }
@@ -825,7 +857,11 @@
       currentHistorySource = source;
       tableTitle.textContent = 'Riwayat Jadwal (Peminjaman & PBM)';
       tableMeta.textContent = 'Memuat data...';
-      pager.style.display = 'none'; renderSkeleton();
+      
+      // Jangan tampilkan skeleton jika q tidak berubah (agar perpindahan halaman/refresh mulus)
+      if (lastMode.q !== q || lastMode.historySource !== source || lastMode.view !== 'history') {
+          pager.style.display = 'none'; renderSkeleton();
+      }
 
       lastMode = { view:'history', roomType:currentRoomType, historySource:source, q, page };
       setUrl({ view:'history', source, q, page, type:null });
@@ -851,7 +887,10 @@
       currentRoomType = type;
       tableTitle.textContent = 'Status Ruangan (Real-time)';
       tableMeta.textContent = 'Memuat data...';
-      pager.style.display = 'none'; renderSkeleton();
+      
+      if (lastMode.q !== q || lastMode.roomType !== type || lastMode.view !== 'rooms') {
+          pager.style.display = 'none'; renderSkeleton();
+      }
 
       lastMode = { view:'rooms', roomType:type, historySource:currentHistorySource, q, page };
       setUrl({ view:'rooms', type, q, page, source:null });
@@ -872,7 +911,6 @@
     }
 
     function applyFilters(page=1, opts={scroll:true}){
-      // Hapus pemanggilan syncTabs() dan syncSecondaryFilter() dari sini
       if (viewMode === 'history') loadHistory(page); else loadRooms(page);
       if (opts && opts.scroll) document.getElementById('unifiedSection')?.scrollIntoView({behavior:'smooth', block:'start'});
     }
@@ -919,7 +957,7 @@
 
     // Init
     setDot(lastPending);
-    setInterval(pollStats, 15000); // Polling setiap 15 detik untuk hemat server
+    setInterval(pollStats, 1000); // Polling setiap 15 detik untuk hemat server
     
     viewMode = @json(($defaultView ?? 'history')) === 'rooms' ? 'rooms' : 'history';
     syncTabs(); syncSecondaryFilter(); applyFilters(1, {scroll:false});

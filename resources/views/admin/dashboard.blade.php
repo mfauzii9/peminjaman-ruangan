@@ -496,9 +496,9 @@
         html: `
           <div style="text-align:left; line-height:1.7">
             <b>Menunggu</b>: pengajuan yang perlu approval.<br>
-            <b>Dipakai</b>: ruangan yang sedang terisi (approved / block / PBM occurrence).<br>
+            <b>Dipakai</b>: ruangan yang sedang terisi.<br>
             <b>Kosong</b>: ruangan tersedia sekarang.<br>
-            <b>Riwayat</b>: total data request + block + PBM.
+            <b>Riwayat</b>: total data request
           </div>
         `,
         icon: 'info',
@@ -537,7 +537,7 @@
       Swal.fire({
         title: 'Tips Chart',
         html: `<div style="text-align:left; line-height:1.7">
-          Trend mengambil data dari <b>borrow_requests.created_at</b> untuk 12 bulan terakhir.
+          Trend mengambil data untuk 12 bulan terakhir.
         </div>`,
         icon: 'info',
         confirmButtonText: 'OK',

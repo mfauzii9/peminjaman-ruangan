@@ -61,6 +61,12 @@ Route::prefix('kema')
     ->group(function () {
         Route::get('/dashboard', [KemaDashboardController::class, 'index'])->name('dashboard');
 
+        // TAMBAHAN: Endpoint untuk AJAX Polling Pending Count Kema
+        Route::get('/api/pending-count', function () {
+            $count = \App\Models\BorrowRequest::where('kema_status', 'menunggu')->count();
+            return response()->json(['pending' => $count]);
+        })->name('pengajuan.pending_count');
+
         Route::get('/pengajuan', [KemaPengajuanController::class, 'index'])->name('pengajuan.index');
         Route::get('/pengajuan/list', [KemaPengajuanController::class, 'list'])->name('pengajuan.list');
 
@@ -76,8 +82,11 @@ Route::prefix('kema')
             ->whereNumber('id')
             ->name('pengajuan.reject');
 
-        Route::get('/riwayat', [KemaPengajuanController::class, 'riwayat'])->name('riwayat');
-        Route::get('/riwayat/list', [KemaPengajuanController::class, 'riwayatList'])->name('riwayat.list');
+        // PERBAIKAN DI SINI:
+        // Mengubah '/riwayat' menjadi '/pengajuan/riwayat' agar URL lebih terstruktur
+        // Mengubah ->name('riwayat') menjadi ->name('pengajuan.riwayat') agar terbaca 'kema.pengajuan.riwayat'
+        Route::get('/pengajuan/riwayat', [KemaPengajuanController::class, 'riwayat'])->name('pengajuan.riwayat');
+        Route::get('/pengajuan/riwayat/list', [KemaPengajuanController::class, 'riwayatList'])->name('pengajuan.riwayat.list');
     });
 
 /*
@@ -91,6 +100,12 @@ Route::prefix('admin')
     ->group(function () {
 
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+        // TAMBAHAN: Endpoint untuk AJAX Polling Pending Count Admin
+        Route::get('/api/pending-count', function () {
+            $count = \App\Models\BorrowRequest::where('status', 'menunggu')->count();
+            return response()->json(['pending' => $count]);
+        })->name('pengajuan.pending_count');
 
         /*
         |--------------------------------------------------------------------------

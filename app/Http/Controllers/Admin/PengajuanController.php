@@ -89,6 +89,7 @@ class PengajuanController extends Controller
     public function history(Request $request)
     {
         DB::statement("SET time_zone = '+07:00'");
+        $this->autohangusRequests();
 
         $status   = (string) $request->query('status', 'all');
         $source   = (string) $request->query('source', 'all');
@@ -151,6 +152,7 @@ class PengajuanController extends Controller
     public function rooms(Request $request)
     {
         DB::statement("SET time_zone = '+07:00'");
+        $this->autohangusRequests();
 
         $type = (string) $request->query('type', 'all');
         $type = in_array($type, array('all', 'occupied', 'soon', 'empty'), true) ? $type : 'all';
@@ -191,6 +193,7 @@ class PengajuanController extends Controller
     public function roomsFree(Request $request)
     {
         DB::statement("SET time_zone = '+07:00'");
+        $this->autohangusRequests();
 
         $date  = trim((string) $request->query('date', ''));
         $start = trim((string) $request->query('start', ''));
@@ -234,6 +237,7 @@ class PengajuanController extends Controller
     public function checkRoomAvailability(Request $request)
     {
         DB::statement("SET time_zone = '+07:00'");
+        $this->autohangusRequests();
 
         $roomId = (int) $request->query('room_id', 0);
         $date   = trim((string) $request->query('date', ''));
@@ -329,10 +333,17 @@ class PengajuanController extends Controller
 
     private function autohangusRequests()
     {
+        // Ubah status Admin menjadi hangus jika start_time terlewat
         DB::table('borrow_requests')
             ->where('status', 'menunggu')
-            ->whereRaw('end_time < NOW()')
+            ->whereRaw('start_time < NOW()')
             ->update(array('status' => 'hangus'));
+
+        // Ubah status Kema menjadi hangus jika start_time terlewat
+        DB::table('borrow_requests')
+            ->where('kema_status', 'menunggu')
+            ->whereRaw('start_time < NOW()')
+            ->update(array('kema_status' => 'hangus'));
     }
 
     private function countRoomsTotal()
@@ -349,9 +360,9 @@ class PengajuanController extends Controller
 
     private function countPbmOccurrencesTotal()
     {
-        // Hitung juga jadwal yang sudah pernah di-reschedule
         return (int) DB::table('pbm_occurrences')
-            ->whereIn('status', array('approved', 'cancelled', 'rejected'))
+            // PERBAIKAN: Menambahkan status rescheduled agar ikut terhitung dalam statistik
+            ->whereIn('status', array('approved', 'rescheduled', 'cancelled', 'rejected'))
             ->count();
     }
 
@@ -364,16 +375,14 @@ class PengajuanController extends Controller
 
     private function countHistoryTotal()
     {
-        // Total riwayat pengajuan, block, dan semua histori PBM
         return
             (int) DB::table('borrow_requests')->count()
             + (int) DB::table('room_blocks')->where('status', 'terbooking')->count()
-            + (int) DB::table('pbm_occurrences')->whereIn('status', array('approved', 'cancelled', 'rejected'))->count();
+            + (int) DB::table('pbm_occurrences')->whereIn('status', array('approved', 'rescheduled', 'cancelled', 'rejected'))->count();
     }
 
     private function countHistoryToday()
     {
-        // Total riwayat yang kegiatan (start_time) nya berlangsung pada hari ini
         return
             (int) DB::table('borrow_requests')
                 ->whereRaw('DATE(start_time) = CURDATE()')
@@ -383,14 +392,13 @@ class PengajuanController extends Controller
                 ->whereRaw('DATE(start_time) = CURDATE()')
                 ->count()
             + (int) DB::table('pbm_occurrences')
-                ->whereIn('status', array('approved', 'cancelled', 'rejected'))
+                ->whereIn('status', array('approved', 'rescheduled', 'cancelled', 'rejected'))
                 ->whereRaw('DATE(start_time) = CURDATE()')
                 ->count();
     }
 
     private function countHistoryMonth()
     {
-        // Total riwayat yang kegiatan (start_time) nya berlangsung pada bulan dan tahun ini
         return
             (int) DB::table('borrow_requests')
                 ->whereRaw('MONTH(start_time) = MONTH(CURDATE()) AND YEAR(start_time) = YEAR(CURDATE())')
@@ -400,7 +408,7 @@ class PengajuanController extends Controller
                 ->whereRaw('MONTH(start_time) = MONTH(CURDATE()) AND YEAR(start_time) = YEAR(CURDATE())')
                 ->count()
             + (int) DB::table('pbm_occurrences')
-                ->whereIn('status', array('approved', 'cancelled', 'rejected'))
+                ->whereIn('status', array('approved', 'rescheduled', 'cancelled', 'rejected'))
                 ->whereRaw('MONTH(start_time) = MONTH(CURDATE()) AND YEAR(start_time) = YEAR(CURDATE())')
                 ->count();
     }
@@ -426,7 +434,8 @@ class PengajuanController extends Controller
 
                 SELECT o.room_id
                 FROM pbm_occurrences o
-                WHERE o.status='approved'
+                -- PERBAIKAN: Ruangan dianggap occupied jika ada jadwal asli atau jadwal pindahan
+                WHERE o.status IN ('approved', 'rescheduled')
                   AND NOW() BETWEEN o.start_time AND o.end_time
             ) t
         ");
@@ -457,7 +466,7 @@ class PengajuanController extends Controller
 
                 SELECT o.room_id, o.end_time
                 FROM pbm_occurrences o
-                WHERE o.status='approved'
+                WHERE o.status IN ('approved', 'rescheduled')
                   AND NOW() BETWEEN o.start_time AND o.end_time
             ) t
             WHERE t.end_time <= DATE_ADD(NOW(), INTERVAL {$m} MINUTE)
@@ -502,7 +511,6 @@ class PengajuanController extends Controller
                 $condsReq[] = "b.status = ?";
                 $bindReq[] = $status;
                 
-                // Jika difilter Ditolak/Hangus, tampilkan juga histori PBM yg direschedule (cancelled)
                 if ($status === 'ditolak') {
                     $condsPbm[] = "o.status IN ('cancelled', 'rejected')";
                     $condsBlk[] = "1=0";
@@ -582,7 +590,11 @@ class PengajuanController extends Controller
                     'pbm' AS kind, o.id, o.room_id,
                     CONCAT(
                         IFNULL(p.mata_kuliah,'PBM'), ' (', IFNULL(p.kelas,'-'), ')',
-                        CASE WHEN o.status IN ('cancelled', 'rejected') THEN ' [RESCHEDULE/BATAL]' ELSE '' END
+                        CASE 
+                            WHEN o.status IN ('cancelled', 'rejected') THEN ' [RESCHEDULE/BATAL]' 
+                            WHEN o.status = 'rescheduled' THEN ' [JADWAL PINDAHAN]'
+                            ELSE '' 
+                        END
                     ) AS title,
                     CONCAT('PBM • ', IFNULL(o.approved_by,'-')) AS org_name,
                     '' AS email, '' AS phone,
@@ -592,7 +604,7 @@ class PengajuanController extends Controller
                     CONCAT('Dosen: ', IFNULL(p.dosen,'-'), ' | Semester: ', IFNULL(p.semester,'-')) AS note
                 FROM pbm_occurrences o
                 JOIN pbm_templates p ON p.id = o.pbm_id
-                WHERE o.status IN ('approved', 'cancelled', 'rejected')
+                WHERE o.status IN ('approved', 'rescheduled', 'cancelled', 'rejected')
                 {$pbmExtra}
             ) t
             JOIN rooms r ON r.id = t.room_id
@@ -654,7 +666,7 @@ class PengajuanController extends Controller
                     CONCAT('Dosen: ', IFNULL(p.dosen,'-'), ' | Semester: ', IFNULL(p.semester,'-'), ' | Approved by: ', IFNULL(o.approved_by,'-')) AS note
                 FROM pbm_occurrences o
                 JOIN pbm_templates p ON p.id=o.pbm_id
-                WHERE o.status='approved'
+                WHERE o.status IN ('approved', 'rescheduled')
                   AND NOW() BETWEEN o.start_time AND o.end_time
             ) t
         ";
@@ -725,7 +737,8 @@ class PengajuanController extends Controller
             WHERE NOT EXISTS (
                 SELECT 1 FROM borrow_requests b
                 WHERE b.room_id = r.id
-                  AND b.status = 'disetujui'
+                  -- PERBAIKAN: Ruangan yang sedang 'menunggu' juga disembunyikan agar tidak diajukan 2 orang di jam sama
+                  AND b.status IN ('menunggu', 'disetujui') 
                   AND b.start_time < ?
                   AND b.end_time > ?
             )
@@ -739,7 +752,8 @@ class PengajuanController extends Controller
             AND NOT EXISTS (
                 SELECT 1 FROM pbm_occurrences o
                 WHERE o.room_id = r.id
-                  AND o.status = 'approved'
+                  -- PERBAIKAN: Harus membaca jadwal yang dire-schedule juga
+                  AND o.status IN ('approved', 'rescheduled')
                   AND o.start_time < ?
                   AND o.end_time > ?
                   AND o.occ_date = DATE(?)
@@ -781,7 +795,8 @@ class PengajuanController extends Controller
                     CONCAT('Email: ', IFNULL(b.email,''), ' | Phone: ', IFNULL(b.phone,'')) AS note
                 FROM borrow_requests b
                 WHERE b.room_id = ?
-                  AND b.status = 'disetujui'
+                  -- PERBAIKAN: Tolak pengajuan jika ada mahasiswa lain yang sedang 'menunggu' persetujuan
+                  AND b.status IN ('menunggu', 'disetujui')
                   AND b.start_time < ?
                   AND b.end_time > ?
 
@@ -816,7 +831,8 @@ class PengajuanController extends Controller
                 FROM pbm_occurrences o
                 JOIN pbm_templates p ON p.id = o.pbm_id
                 WHERE o.room_id = ?
-                  AND o.status = 'approved'
+                  -- PERBAIKAN: Baca jadwal hasil reschedule
+                  AND o.status IN ('approved', 'rescheduled')
                   AND o.start_time < ?
                   AND o.end_time > ?
                   AND o.occ_date = DATE(?)

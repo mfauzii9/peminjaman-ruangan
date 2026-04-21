@@ -4,13 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Models\Room;
 use App\Models\BorrowRequest;
-use App\Notifications\BorrowSubmitted;
-use App\Notifications\KemaApproved;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+
+// Tambahkan Import untuk Mailable Queue
+use App\Mail\EmailUntukMahasiswa;
+use App\Mail\EmailUntukKemahasiswaan;
+use Illuminate\Support\Facades\Mail;
 
 class BorrowController extends Controller
 {
@@ -27,10 +29,10 @@ class BorrowController extends Controller
      */
     private function getRoomLocks(Room $room, Carbon $now, string $tz)
     {
-        // borrow_requests yang benar-benar sudah mengunci ruangan
+        // PERBAIKAN 1: Tampilkan juga jadwal mahasiswa yang 'menunggu' agar tidak ditabrak
         $borrowLocks = BorrowRequest::query()
             ->where('room_id', $room->id)
-            ->whereIn('status', ['disetujui'])
+            ->whereIn('status', ['menunggu', 'disetujui']) 
             ->orderBy('start_time', 'asc')
             ->get([
                 'start_time',
@@ -44,18 +46,21 @@ class BorrowController extends Controller
                 $end   = Carbon::parse($r->end_time)->timezone($tz);
 
                 $who = $r->org_name ?: ($r->responsible_name ?: '-');
+                // Beri label berbeda untuk yang masih menunggu
+                $prefix = $r->status === 'menunggu' ? 'PROSES - ' : 'ACC - ';
 
                 return [
                     'start' => $start,
                     'end'   => $end,
-                    'title' => 'ACC - ' . $who,
+                    'title' => $prefix . $who,
                     'src'   => 'borrow_requests',
                 ];
             });
 
+        // PERBAIKAN 2: Tampilkan jadwal PBM yang 'rescheduled' (Jadwal pindahan)
         $pbmLocks = DB::table('pbm_occurrences')
             ->where('room_id', $room->id)
-            ->where('status', 'approved')
+            ->whereIn('status', ['approved', 'rescheduled'])
             ->orderBy('start_time', 'asc')
             ->get([
                 'pbm_id',
@@ -66,11 +71,13 @@ class BorrowController extends Controller
             ->map(function ($r) use ($tz) {
                 $start = Carbon::parse($r->start_time)->timezone($tz);
                 $end   = Carbon::parse($r->end_time)->timezone($tz);
+                
+                $label = $r->status === 'rescheduled' ? 'PBM [PINDAHAN]' : 'PBM';
 
                 return [
                     'start' => $start,
                     'end'   => $end,
-                    'title' => 'PBM #' . (string) $r->pbm_id,
+                    'title' => $label,
                     'src'   => 'pbm_occurrences',
                 ];
             });
@@ -171,6 +178,7 @@ class BorrowController extends Controller
         sort($tomorrowSchedules);
         sort($nextSchedules);
 
+        // Bagian view ini TETAP SAMA PERSIS
         return view('borrow.create', [
             'room'             => $room,
             'minStartLocal'    => $minStartLocal,
@@ -251,16 +259,19 @@ class BorrowController extends Controller
                 ->withInput();
         }
 
+        // CEK BENTROK: Berlaku untuk hari ini, besok, minggu depan, dst.
+        // PERBAIKAN 3: Kunci ruangan jika ada yang sedang antre (menunggu)
         $bentrokBorrow = BorrowRequest::query()
             ->where('room_id', $room->id)
-            ->whereIn('status', ['disetujui'])
+            ->whereIn('status', ['menunggu', 'disetujui']) 
             ->where('start_time', '<', $end->format('Y-m-d H:i:s'))
             ->where('end_time', '>', $start->format('Y-m-d H:i:s'))
             ->exists();
 
+        // PERBAIKAN 4: Cek jadwal PBM pindahan (rescheduled)
         $bentrokPbm = DB::table('pbm_occurrences')
             ->where('room_id', $room->id)
-            ->where('status', 'approved')
+            ->whereIn('status', ['approved', 'rescheduled'])
             ->where('start_time', '<', $end->format('Y-m-d H:i:s'))
             ->where('end_time', '>', $start->format('Y-m-d H:i:s'))
             ->exists();
@@ -275,7 +286,8 @@ class BorrowController extends Controller
         // JIKA BENTROK, KIRIM SESSION KE SWEETALERT
         if ($bentrokBorrow || $bentrokPbm || $bentrokBlock) {
             return back()
-                ->with('error_conflict', 'Maaf jadwal bentrok, Anda bisa lihat dulu di daftar jadwal di beranda Home.')
+                ->with('error', 'Maaf jadwal bentrok, silahkan Anda cek kembali ke jadwal ruangan.')
+                ->with('error_conflict', 'Maaf jadwal bentrok, silahkan Anda cek kembali ke jadwal ruangan.')
                 ->withInput();
         }
 
@@ -304,19 +316,12 @@ class BorrowController extends Controller
             'kema_status'      => 'menunggu',
         ]);
 
-        $roomLabel = trim(($room->floor ?? '-') . ' - ' . ($room->name ?? '-'));
-        $startText = $start->format('d M Y H:i');
-        $endText   = $end->format('d M Y H:i');
+        // PENGIRIMAN EMAIL BARU (DENGAN QUEUE)
+        // Diubah dari ->send() menjadi ->queue() agar proses website tidak tertahan
+        Mail::to($borrow->email)->queue(new EmailUntukMahasiswa($borrow, 'kode_awal'));
+        Mail::to(self::KEMA_EMAIL)->queue(new EmailUntukKemahasiswaan($borrow));
 
-        Notification::route('mail', $borrow->email)
-            ->notify(new BorrowSubmitted($borrow->id, $roomLabel, $startText, $endText));
-
-        Notification::route('mail', self::ADMIN_EMAIL)
-            ->notify(new BorrowSubmitted($borrow->id, $roomLabel, $startText, $endText));
-
-        Notification::route('mail', self::KEMA_EMAIL)
-            ->notify(new KemaApproved($borrow->id, $roomLabel, $startText, $endText));
-
+        // Bagian redirect route ini TETAP SAMA PERSIS
         return redirect()->route('success.show', [
             'code'  => $borrow->public_code,
             'token' => $tokenPlain,

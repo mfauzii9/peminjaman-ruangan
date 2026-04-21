@@ -12,6 +12,7 @@ class HomeController extends Controller
     {
         // Pastikan timezone server sudah WIB agar tidak meleset
         DB::statement("SET time_zone = '+07:00'");
+        $now = Carbon::now('Asia/Jakarta');
 
         $selectedTanggal = (string) $request->get('tanggal', date('Y-m-d'));
 
@@ -35,6 +36,11 @@ class HomeController extends Controller
             ->pluck('floor');
 
         // 2. Ambil data ruangan
+        $roomsData = DB::table('rooms')
+            ->select('id', 'name', 'floor', 'capacity', 'photo')
+            ->get()
+            ->keyBy('id');
+
         $roomsQuery = DB::table('rooms')
             ->select('id', 'name', 'floor', 'capacity', 'photo')
             ->whereNotNull('name');
@@ -55,32 +61,114 @@ class HomeController extends Controller
             ->get();
 
         // ---------------------------------------------------------------------
-        // 3. QUERY JADWAL: PBM (Termasuk Reschedule)
+        // 3. QUERY JADWAL PBM: Gabungan Template Rutin & Reschedule Dinamis
         // ---------------------------------------------------------------------
-        $pbmRows = DB::table('pbm_occurrences as po')
-            ->leftJoin('pbm_templates as pt', 'pt.id', '=', 'po.pbm_id')
-            ->join('rooms as r', 'r.id', '=', 'po.room_id')
-            ->select(
-                'po.room_id',
-                'po.start_time',
-                'po.end_time',
-                'po.occ_date', // Tambahan untuk membedakan tanggal
-                DB::raw("COALESCE(pt.mata_kuliah, 'PBM') as mata_kuliah"),
-                DB::raw("COALESCE(pt.kelas, '-') as kelas"),
-                DB::raw("COALESCE(pt.dosen, '-') as dosen"),
-                'r.name as room_name',
-                'r.floor'
-            )
-            ->whereDate('po.occ_date', '>=', $selectedTanggal) // Menampilkan tanggal yg dipilih dan hari selanjutnya
-            ->where('po.status', 'approved') 
-            ->when($lantai !== 'all', function ($q) use ($lantai) {
-                $q->where('r.floor', $lantai);
-            })
-            ->orderBy('po.start_time')
+        
+        // Ambil Template Rutin untuk hari ini
+        $templates = DB::table('pbm_templates')
+            ->where('hari', $selectedHari)
+            ->where('aktif', 1)
             ->get();
 
+        // Ambil data Occurrence (Perubahan/Reschedule/Batal) khusus di tanggal ini
+        $occurrences = DB::table('pbm_occurrences')
+            ->whereDate('occ_date', $selectedTanggal)
+            ->get();
+
+        $pbmRows = collect();
+        $processedOccIds = [];
+
+        // Proses 1: Masukkan Jadwal Rutin Asli di hari ini
+        foreach ($templates as $t) {
+            $nativeOcc = $occurrences->where('pbm_id', $t->id)->where('is_rescheduled', 0)->first();
+
+            if ($nativeOcc) {
+                $processedOccIds[] = $nativeOcc->id;
+                
+                // Jika dibatalkan/ditolak, jangan tampilkan
+                if (in_array($nativeOcc->status, ['cancelled', 'rejected'])) {
+                    continue;
+                }
+
+                // Filter waktu: Sembunyikan jika jam selesai sudah lewat
+                $absoluteEndTime = Carbon::parse($selectedTanggal . ' ' . Carbon::parse($nativeOcc->end_time)->format('H:i:s'));
+                if ($absoluteEndTime->isPast()) {
+                    continue;
+                }
+                
+                $pbmRows->push((object)[
+                    'pbm_id'         => $t->id,
+                    'room_id'        => $nativeOcc->room_id,
+                    'start_time'     => $nativeOcc->start_time,
+                    'end_time'       => $nativeOcc->end_time,
+                    'mata_kuliah'    => $t->mata_kuliah ?: 'PBM',
+                    'kelas'          => $t->kelas ?: '-',
+                    'dosen'          => $t->dosen ?: '-',
+                    'room_name'      => $roomsData->has($nativeOcc->room_id) ? $roomsData->get($nativeOcc->room_id)->name : 'Unknown',
+                    'floor'          => $roomsData->has($nativeOcc->room_id) ? $roomsData->get($nativeOcc->room_id)->floor : '',
+                    'is_rescheduled' => false
+                ]);
+            } else {
+                // Filter waktu: Sembunyikan jika jam selesai sudah lewat (dari template)
+                $absoluteEndTime = Carbon::parse($selectedTanggal . ' ' . Carbon::parse($t->end_time)->format('H:i:s'));
+                if ($absoluteEndTime->isPast()) {
+                    continue;
+                }
+
+                $pbmRows->push((object)[
+                    'pbm_id'         => $t->id,
+                    'room_id'        => $t->room_id,
+                    'start_time'     => $selectedTanggal . ' ' . $t->start_time,
+                    'end_time'       => $selectedTanggal . ' ' . $t->end_time,
+                    'mata_kuliah'    => $t->mata_kuliah ?: 'PBM',
+                    'kelas'          => $t->kelas ?: '-',
+                    'dosen'          => $t->dosen ?: '-',
+                    'room_name'      => $roomsData->has($t->room_id) ? $roomsData->get($t->room_id)->name : 'Unknown',
+                    'floor'          => $roomsData->has($t->room_id) ? $roomsData->get($t->room_id)->floor : '',
+                    'is_rescheduled' => false
+                ]);
+            }
+        }
+
+        // Proses 2: Masukkan Jadwal TAMU (Jadwal pindahan dari hari lain)
+        foreach ($occurrences as $occ) {
+            if (in_array($occ->id, $processedOccIds)) continue;
+            if (in_array($occ->status, ['cancelled', 'rejected'])) continue;
+
+            // Filter waktu: Sembunyikan jika jam selesai sudah lewat
+            $absoluteEndTime = Carbon::parse($selectedTanggal . ' ' . Carbon::parse($occ->end_time)->format('H:i:s'));
+            if ($absoluteEndTime->isPast()) {
+                continue;
+            }
+
+            $tmpl = DB::table('pbm_templates')->where('id', $occ->pbm_id)->first();
+            if ($tmpl) {
+                $pbmRows->push((object)[
+                    'pbm_id'         => $occ->pbm_id,
+                    'room_id'        => $occ->room_id,
+                    'start_time'     => $occ->start_time,
+                    'end_time'       => $occ->end_time,
+                    'mata_kuliah'    => $tmpl->mata_kuliah ?: 'PBM',
+                    'kelas'          => $tmpl->kelas ?: '-',
+                    'dosen'          => $tmpl->dosen ?: '-',
+                    'room_name'      => $roomsData->has($occ->room_id) ? $roomsData->get($occ->room_id)->name : 'Unknown',
+                    'floor'          => $roomsData->has($occ->room_id) ? $roomsData->get($occ->room_id)->floor : '',
+                    'is_rescheduled' => true // Tandai sebagai jadwal tamu
+                ]);
+            }
+        }
+
+        // Filter PBM berdasarkan lantai (jika ada)
+        if ($lantai !== 'all') {
+            $pbmRows = $pbmRows->filter(function ($item) use ($lantai) {
+                return (string) $item->floor === (string) $lantai;
+            });
+        }
+        
+        $pbmRows = $pbmRows->sortBy('start_time')->values();
+
         // ---------------------------------------------------------------------
-        // 4. QUERY JADWAL: Pengajuan Mahasiswa
+        // 4. QUERY JADWAL: Pengajuan Mahasiswa - HANYA 1 HARI
         // ---------------------------------------------------------------------
         $mahasiswaRows = DB::table('borrow_requests as br')
             ->join('rooms as r', 'r.id', '=', 'br.room_id')
@@ -94,16 +182,22 @@ class HomeController extends Controller
                 'r.name as room_name',
                 'r.floor'
             )
-            ->whereDate('br.start_time', '>=', $selectedTanggal) // Menampilkan tanggal yg dipilih dan hari selanjutnya
-            ->where('br.status', 'disetujui')
+            ->whereDate('br.start_time', '=', $selectedTanggal)
+            ->whereIn('br.status', ['disetujui', 'menunggu']) 
             ->when($lantai !== 'all', function ($q) use ($lantai) {
                 $q->where('r.floor', $lantai);
             })
             ->orderBy('br.start_time')
             ->get();
 
+        // Filter jadwal Mahasiswa yang sudah lewat (Absolute time check)
+        $mahasiswaRows = $mahasiswaRows->filter(function ($item) use ($selectedTanggal) {
+            $absoluteEndTime = Carbon::parse($selectedTanggal . ' ' . Carbon::parse($item->end_time)->format('H:i:s'));
+            return !$absoluteEndTime->isPast();
+        })->values();
+
         // ---------------------------------------------------------------------
-        // 5. QUERY JADWAL: Booking Cepat (Admin/Kemahasiswaan)
+        // 5. QUERY JADWAL: Booking Cepat (Admin/Kemahasiswaan) - HANYA 1 HARI
         // ---------------------------------------------------------------------
         $bookingCepatRows = DB::table('room_blocks as rb')
             ->join('rooms as r', 'r.id', '=', 'rb.room_id')
@@ -118,7 +212,7 @@ class HomeController extends Controller
                 'r.name as room_name',
                 'r.floor'
             )
-            ->whereDate('rb.start_time', '>=', $selectedTanggal) // Menampilkan tanggal yg dipilih dan hari selanjutnya
+            ->whereDate('rb.start_time', '=', $selectedTanggal)
             ->where('rb.status', 'terbooking') 
             ->when($lantai !== 'all', function ($q) use ($lantai) {
                 $q->where('r.floor', $lantai);
@@ -126,13 +220,19 @@ class HomeController extends Controller
             ->orderBy('rb.start_time')
             ->get();
 
+        // Filter Booking Cepat yang sudah lewat (Absolute time check)
+        $bookingCepatRows = $bookingCepatRows->filter(function ($item) use ($selectedTanggal) {
+            $absoluteEndTime = Carbon::parse($selectedTanggal . ' ' . Carbon::parse($item->end_time)->format('H:i:s'));
+            return !$absoluteEndTime->isPast();
+        })->values();
+
         // ---------------------------------------------------------------------
         // 6. GENERATE TIME SLOTS (Sumbu Y/Jam di Kalender)
         // ---------------------------------------------------------------------
         $timeSlots = array();
         $slotSeen = array();
 
-        // Kumpulkan semua jadwal jadi satu array untuk diekstrak jamnya
+        // Kumpulkan semua jadwal jadi satu array
         $allSchedules = array_merge($pbmRows->toArray(), $mahasiswaRows->toArray(), $bookingCepatRows->toArray());
 
         foreach ($allSchedules as $row) {
@@ -150,16 +250,15 @@ class HomeController extends Controller
             }
         }
 
-        // Fallback: Jika tidak ada jadwal sama sekali hari itu, pakai jam dari template
+        // Fallback: Jika tidak ada jadwal sama sekali hari itu, pakai jam dari template yang aktif di hari tsb
+        // (Pastikan time slot dari template juga difilter jika sudah lewat)
         if (empty($timeSlots)) {
-            $fallbackSlots = DB::table('pbm_templates')
-                ->select('start_time', 'end_time')
-                ->where('aktif', 1)
-                ->distinct()
-                ->orderBy('start_time')
-                ->get();
+            foreach ($templates as $slot) {
+                $absoluteEndTime = Carbon::parse($selectedTanggal . ' ' . Carbon::parse($slot->end_time)->format('H:i:s'));
+                if ($absoluteEndTime->isPast()) {
+                    continue;
+                }
 
-            foreach ($fallbackSlots as $slot) {
                 $start = Carbon::parse($slot->start_time)->format('H:i:s');
                 $end = Carbon::parse($slot->end_time)->format('H:i:s');
                 $slotKey = $start . '|' . $end;
@@ -189,7 +288,6 @@ class HomeController extends Controller
         foreach ($pbmRows as $item) {
             $itemStart = Carbon::parse($item->start_time)->format('H:i:s');
             $itemEnd = Carbon::parse($item->end_time)->format('H:i:s');
-            $tglPbm = Carbon::parse($item->occ_date)->format('d/m/Y'); // Tanggal kegiatan
 
             foreach ($timeSlots as $slot) {
                 if ($this->isTimeOverlap($slot['start'], $slot['end'], $itemStart, $itemEnd)) {
@@ -199,9 +297,14 @@ class HomeController extends Controller
                         $scheduleMap[$cellKey] = array();
                     }
 
+                    $title = $item->mata_kuliah;
+                    if ($item->is_rescheduled) {
+                        $title .= ' [PINDAHAN]'; // Menandakan ini jadwal tamu
+                    }
+
                     $scheduleMap[$cellKey][] = array(
                         'type'       => 'pbm',
-                        'title'      => $item->mata_kuliah . ' (' . $tglPbm . ')',
+                        'title'      => $title,
                         'subtitle'   => 'Kelas: ' . $item->kelas,
                         'meta'       => 'Dosen: ' . $item->dosen,
                         'start_time' => $itemStart,
@@ -215,7 +318,6 @@ class HomeController extends Controller
         foreach ($mahasiswaRows as $item) {
             $itemStart = Carbon::parse($item->start_time)->format('H:i:s');
             $itemEnd = Carbon::parse($item->end_time)->format('H:i:s');
-            $tglMhs = Carbon::parse($item->start_time)->format('d/m/Y'); // Tanggal kegiatan
 
             foreach ($timeSlots as $slot) {
                 if ($this->isTimeOverlap($slot['start'], $slot['end'], $itemStart, $itemEnd)) {
@@ -227,7 +329,7 @@ class HomeController extends Controller
 
                     $scheduleMap[$cellKey][] = array(
                         'type'       => 'mahasiswa',
-                        'title'      => 'Peminjaman Ruangan (' . $tglMhs . ')',
+                        'title'      => $item->status === 'menunggu' ? 'Sedang Diproses/Menunggu' : 'Peminjaman Ruangan',
                         'subtitle'   => $item->org_name ? $item->org_name : 'Mahasiswa',
                         'meta'       => 'PJ: ' . ($item->responsible_name ? $item->responsible_name : '-'),
                         'start_time' => $itemStart,
@@ -241,7 +343,6 @@ class HomeController extends Controller
         foreach ($bookingCepatRows as $item) {
             $itemStart = Carbon::parse($item->start_time)->format('H:i:s');
             $itemEnd = Carbon::parse($item->end_time)->format('H:i:s');
-            $tglBooking = Carbon::parse($item->start_time)->format('d/m/Y'); // Tanggal kegiatan
 
             foreach ($timeSlots as $slot) {
                 if ($this->isTimeOverlap($slot['start'], $slot['end'], $itemStart, $itemEnd)) {
@@ -253,7 +354,7 @@ class HomeController extends Controller
 
                     $scheduleMap[$cellKey][] = array(
                         'type'       => 'quick_booking',
-                        'title'      => ($item->title ? $item->title : 'Booking Ruangan') . ' (' . $tglBooking . ')',
+                        'title'      => ($item->title ? $item->title : 'Booking Ruangan'),
                         'subtitle'   => 'Oleh: ' . ucfirst($item->source),
                         'meta'       => $item->note ? $item->note : '-',
                         'start_time' => $itemStart,

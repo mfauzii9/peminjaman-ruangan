@@ -21,8 +21,8 @@
       --muted:#64748b;
       --line:#e6edf7;
       --soft:#f8fbff;
-      --blue:#2563eb;
-      --blue2:#1d4ed8;
+      --blue:#3d7aff;
+      --blue2:#2962ff;
       --green:#10b981;
       --amber:#f59e0b;
       --red:#ef4444;
@@ -121,10 +121,10 @@
     .btn:hover{transform:translateY(-1px); background:#f8fbff}
     .btn:disabled{opacity:.55; cursor:not-allowed; transform:none !important}
     .btn-primary{
-      color:#fff;
+      color:#2f3038;
       border-color:transparent;
       background:linear-gradient(135deg,var(--blue),var(--blue2));
-      box-shadow:0 14px 28px rgba(37,99,235,.18);
+      box-shadow:0 14px 28px rgba(76, 122, 221, 0.18);
     }
     .btn-danger{
       color:#b91c1c;
@@ -166,28 +166,64 @@
       display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap;
     }
 
+    /* CARD STATS MODIFICATION */
     .stats{
       display:grid;
-      grid-template-columns:repeat(4,minmax(0,1fr));
-      gap:10px;
+      grid-template-columns:repeat(3,minmax(0,1fr)); /* Diubah menjadi 3 kolom */
+      gap:14px;
     }
     .stat{
       border:1px solid var(--line);
-      background:#fff;
-      border-radius:16px;
-      padding:13px 14px;
+      border-radius:18px;
+      padding:16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
     }
-    .stat .label{
-      display:block;
-      color:var(--muted);
-      font-size:var(--fs-xs);
-      margin-bottom:5px;
+    .stat:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.06);
     }
-    .stat .value{
-      font-size:20px;
-      font-weight:800;
-      line-height:1.1;
+    .stat .label {
+      display: block;
+      font-size: var(--fs-xs);
+      margin-bottom: 4px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
+    .stat .value {
+      font-size: 24px;
+      font-weight: 800;
+      line-height: 1;
+      color: var(--text);
+    }
+    .statIcon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      font-size: 20px;
+      flex: 0 0 auto;
+      background: #fff;
+    }
+    
+    /* Stats Colors */
+    .stat-total { background: #eff6ff; border-color: #bfdbfe; }
+    .stat-total .statIcon { color: #2563eb; box-shadow: 0 4px 10px rgba(37,99,235,0.1); }
+    .stat-total .label { color: #3b82f6; }
+
+    .stat-approved { background: #ecfdf5; border-color: #a7f3d0; }
+    .stat-approved .statIcon { color: #059669; box-shadow: 0 4px 10px rgba(16,185,129,0.1); }
+    .stat-approved .label { color: #10b981; }
+
+    .stat-riwayat { background: #f8fafc; border-color: #e2e8f0; }
+    .stat-riwayat .statIcon { color: #475569; box-shadow: 0 4px 10px rgba(100,116,139,0.1); }
+    .stat-riwayat .label { color: #64748b; }
+    /* END MODIFICATION */
 
     .tableScroll,.templateScroll{
       border:1px solid var(--line);
@@ -268,6 +304,11 @@
       border-color:rgba(37,99,235,.22);
       background:rgba(37,99,235,.08);
       color:#1d4ed8;
+    }
+    .badge.riwayat{
+      border-color:#cbd5e1;
+      background:#f1f5f9;
+      color:#475569;
     }
 
     .rowActions{
@@ -369,31 +410,38 @@
               <div>
                 <div class="cardTitle">
                   <div class="cardIcon"><i class="fa-solid fa-calendar-check"></i></div>
-                  <span>Jadwal PBM Harian</span>
+                  <span>Jadwal PBM</span>
                 </div>
                 <div class="subText" style="margin-top:4px;">
-                  Reschedule hanya untuk occurrence tanggal tertentu, template tetap.
+                  Tampilan jadwal harian. Jadwal akan otomatis menjadi Riwayat setelah jam mulai masuk.
                 </div>
               </div>
             </div>
 
             <div class="cardBody">
               <div class="stats">
-                <div class="stat">
-                  <span class="label">Total Jadwal</span>
-                  <div class="value" id="statTotal">0</div>
+                <div class="stat stat-total" onclick="filterByCard('all')" title="Klik untuk tampilkan semua">
+                  <div class="statIcon"><i class="fa-solid fa-calendar-day"></i></div>
+                  <div class="statContent">
+                    <span class="label">Total Jadwal</span>
+                    <div class="value" id="statTotal">0</div>
+                  </div>
                 </div>
-                <div class="stat">
-                  <span class="label">Approved</span>
-                  <div class="value" id="statApproved">0</div>
+                
+                <div class="stat stat-approved" onclick="filterByCard('approved')" title="Klik untuk tampilkan yang belum mulai">
+                  <div class="statIcon"><i class="fa-regular fa-clock"></i></div>
+                  <div class="statContent">
+                    <span class="label">Belum Mulai</span>
+                    <div class="value" id="statApproved">0</div>
+                  </div>
                 </div>
-                <div class="stat">
-                  <span class="label">Draft</span>
-                  <div class="value" id="statDraft">0</div>
-                </div>
-                <div class="stat">
-                  <span class="label">Terlihat</span>
-                  <div class="value" id="selectedEventsCount">0</div>
+
+                <div class="stat stat-riwayat" onclick="filterByCard('riwayat')" title="Klik untuk tampilkan riwayat / selesai">
+                  <div class="statIcon"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                  <div class="statContent">
+                    <span class="label">Riwayat / Selesai</span>
+                    <div class="value" id="statRiwayat">0</div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -421,8 +469,8 @@
                   <i class="fa-solid fa-filter"></i>
                   <select id="evStatus">
                     <option value="all" selected>Semua Status</option>
-                    <option value="approved">Approved</option>
-                    <option value="draft">Draft</option>
+                    <option value="approved">Approved (Belum Mulai)</option>
+                    <option value="riwayat">Riwayat (Sudah Mulai/Selesai)</option>
                   </select>
                 </div>
 
@@ -430,7 +478,7 @@
                   <i class="fa-solid fa-rotate"></i> Refresh
                 </button>
                 <button class="btn btn-danger" type="button" onclick="deleteAllEvents()">
-                  <i class="fa-solid fa-trash-can"></i> Hapus Semua Jadwal
+                  <i class="fa-solid fa-trash-can"></i> Hapus Tanggal
                 </button>
               </div>
             </div>
@@ -552,7 +600,7 @@
               </div>
 
               <div class="footerBar">
-                <div class="meta">Template mingguan membentuk occurrence saat tanggal dibuka.</div>
+                <div class="meta">Template mingguan membentuk occurrence otomatis.</div>
                 <div class="meta">Occurrence bisa dipindah per tanggal tanpa mengubah template.</div>
               </div>
             </details>
@@ -633,6 +681,7 @@ function statusBadge(st){
   if (st === 'draft') return `<span class="badge warn"><i class="fa-solid fa-hourglass-half"></i> Draft</span>`;
   if (st === 'rescheduled') return `<span class="badge info"><i class="fa-solid fa-arrow-right-arrow-left"></i> Dipindah</span>`;
   if (st === 'cancelled') return `<span class="badge warn"><i class="fa-solid fa-ban"></i> Dibatalkan</span>`;
+  if (st === 'riwayat') return `<span class="badge riwayat"><i class="fa-solid fa-clock-rotate-left"></i> Riwayat</span>`;
   return `<span class="badge info"><i class="fa-solid fa-circle"></i> ${escapeHtml(st || '-')}</span>`;
 }
 
@@ -642,14 +691,15 @@ function tmplBadge(aktif){
     : `<span class="badge warn"><i class="fa-solid fa-circle"></i> Nonaktif</span>`;
 }
 
-function updateStats(rows){
-  $('statTotal').textContent = rows.length;
-  $('statApproved').textContent = rows.filter(x => String(x.status).toLowerCase() === 'approved').length;
-  $('statDraft').textContent = rows.filter(x => String(x.status).toLowerCase() === 'draft').length;
+function filterByCard(status) {
+  $('evStatus').value = status;
+  loadEvents();
 }
 
-function updateSelectedEventsCount(){
-  $('selectedEventsCount').textContent = EVENTS.length;
+function updateStats(rows){
+  $('statTotal').textContent = rows.length;
+  $('statApproved').textContent = rows.filter(x => String(x.status).toLowerCase() === 'approved' || String(x.status).toLowerCase() === 'rescheduled').length;
+  $('statRiwayat').textContent = rows.filter(x => String(x.status).toLowerCase() === 'riwayat').length;
 }
 
 function roomOptionsHtml(selectedId){
@@ -768,7 +818,7 @@ function openPBMHelp(){
       <div class="swal-scroll" style="text-align:left; line-height:1.8">
         <b>Template</b> adalah jadwal rutin mingguan.<br><br>
         <b>Occurrence</b> adalah kejadian jadwal pada tanggal tertentu.<br><br>
-        Saat occurrence dipindah, <b>template tetap</b>. Jadi minggu berikutnya jadwal kembali normal dari template.
+        Saat occurrence dipindah ke hari yang sama, jadwal akan langsung di-update. Jika dipindah ke hari yang berbeda, aturan database akan memastikan tidak ada bentrok kejadian di tanggal tersebut.
       </div>
     `,
     confirmButtonColor:'#2563eb',
@@ -790,21 +840,14 @@ async function loadRooms(){
 /* ===================== EVENTS ===================== */
 async function loadEvents(){
   const d = ($('evDate').value || '').trim();
-  $('dateLabel').textContent = d || '-';
-
-  if (!d){
-    $('tbEvents').innerHTML = `<tr><td colspan="7" style="text-align:center; padding:28px;">Pilih tanggal terlebih dahulu</td></tr>`;
-    EVENTS = [];
-    updateStats([]);
-    updateSelectedEventsCount();
-    return;
-  }
+  $('dateLabel').textContent = d ? `${d}` : 'Hari Ini';
 
   $('tbEvents').innerHTML = `<tr><td colspan="7" style="text-align:center; padding:28px;"><i class="fa-solid fa-spinner fa-spin"></i> Memuat...</td></tr>`;
 
+  // MENGAMBIL SELURUH STATUS DATA UNTUK MENGHITUNG STATISTIK DI CARD TERLEBIH DAHULU
   const params = new URLSearchParams({
     date: d,
-    status: $('evStatus').value || 'all',
+    status: 'all', // Selalu 'all' ke server agar count stat tetap benar
     q: ($('evQ').value || '').trim()
   });
 
@@ -813,26 +856,40 @@ async function loadEvents(){
     $('tbEvents').innerHTML = `<tr><td colspan="7" style="text-align:center; padding:28px; color:#dc2626;">${escapeHtml(j.message || 'Gagal memuat jadwal')}</td></tr>`;
     EVENTS = [];
     updateStats([]);
-    updateSelectedEventsCount();
     return;
   }
 
-  let rows = j.items || [];
+  let allRows = j.items || [];
+  EVENTS = allRows;
+  
+  // 1. Update card stats menggunakan seluruh data PBM (sebelum dilimit filter tabel)
+  updateStats(allRows);
+
+  // 2. Terapkan filter tabel (Frontend)
+  let displayRows = allRows;
+
   const roomFilter = $('evRoom').value || '';
   if (roomFilter) {
-    rows = rows.filter(r => String(r.room_id) === String(roomFilter));
+    displayRows = displayRows.filter(r => String(r.room_id) === String(roomFilter));
   }
 
-  EVENTS = rows;
-  updateStats(rows);
+  const statusFilter = $('evStatus').value || 'all';
+  if (statusFilter !== 'all') {
+    displayRows = displayRows.filter(r => {
+      const st = String(r.status).toLowerCase();
+      if (statusFilter === 'approved') return st === 'approved' || st === 'rescheduled';
+      if (statusFilter === 'riwayat') return st === 'riwayat' || st === 'selesai';
+      return st === statusFilter;
+    });
+  }
 
-  if (rows.length === 0){
+  // 3. Render tabel
+  if (displayRows.length === 0){
     $('tbEvents').innerHTML = `<tr><td colspan="7" style="text-align:center; padding:26px;">Tidak ada jadwal PBM untuk filter ini.</td></tr>`;
-    updateSelectedEventsCount();
     return;
   }
 
-  $('tbEvents').innerHTML = rows.map((r, idx) => {
+  $('tbEvents').innerHTML = displayRows.map((r, idx) => {
     const room = `${escapeHtml(r.room_floor)} - ${escapeHtml(r.room_name)}`;
     const jam = `${hmFromDT(r.start_time)} - ${hmFromDT(r.end_time)}`;
 
@@ -851,7 +908,7 @@ async function loadEvents(){
         <td>${statusBadge(r.status)}</td>
         <td>
           <div class="rowActions">
-            <button class="btn btn-mini btn-primary" type="button" onclick="openRescheduleEvent(${r.id})">
+            <button class="btn btn-mini btn-primary" type="button" onclick="openRescheduleEvent(${r.id})" ${r.status === 'riwayat' ? 'disabled' : ''}>
               <i class="fa-solid fa-arrow-right-arrow-left"></i> Reschedule
             </button>
             <button class="btn btn-mini btn-danger" type="button" onclick="deleteEvent(${r.id})">
@@ -862,8 +919,6 @@ async function loadEvents(){
       </tr>
     `;
   }).join('');
-
-  updateSelectedEventsCount();
 }
 
 function getEventById(id){
@@ -873,6 +928,7 @@ function getEventById(id){
 async function openRescheduleEvent(id){
   const item = getEventById(id);
   if (!item) return toast('error', 'Data event tidak ditemukan');
+  if (item.status === 'riwayat') return toast('warning', 'Jadwal riwayat tidak bisa diedit');
 
   const res = await Swal.fire({
     title:'Reschedule Jadwal PBM',
@@ -945,8 +1001,8 @@ async function deleteAllEvents(){
   if (!d) {
     return Swal.fire({
       icon:'info',
-      title:'Tanggal belum dipilih',
-      text:'Pilih tanggal dulu.',
+      title:'Pilih Tanggal Dulu',
+      text:'Untuk menghapus jadwal sekaligus, silakan pilih tanggal spesifik di filter atas.',
       confirmButtonColor:'#2563eb',
       heightAuto:false
     });
@@ -971,7 +1027,7 @@ async function deleteAllEvents(){
   const j = await api(URL_EV_DELETE_ALL, { method:'POST', body: fd });
   if (!j.ok) return toast('error', j.message || 'Gagal hapus semua jadwal');
 
-  toast('success', j.message || `Berhasil ubah ${j.deleted || 0} jadwal`);
+  toast('success', j.message || `Berhasil hapus ${j.deleted || 0} jadwal`);
   await loadEvents();
 }
 
@@ -1048,7 +1104,7 @@ function openCSVUploadPBM(){
         <div class="helper" style="margin-bottom:12px;">
           <div style="font-size:12px; color:#334155;">
             Header: <code>room_id,hari,start_time,end_time,mata_kuliah,kelas,dosen,semester,aktif</code><br>
-            <span class="meta">Template masuk ke pbm_templates. Occurrence dibentuk otomatis saat tanggal dibuka.</span>
+            <span class="meta">Template masuk ke pbm_templates. Occurrence dibentuk otomatis saat rentang bulan dibuka.</span>
           </div>
         </div>
 
@@ -1356,17 +1412,16 @@ $('fQ')?.addEventListener('input', debLoadTemplates);
 
 /* ===================== INIT ===================== */
 (async function init(){
+  // Tampilan Default: Hari Ini
   const now = new Date();
   const today = `${now.getFullYear()}-${pad2(now.getMonth()+1)}-${pad2(now.getDate())}`;
 
-  $('evDate').value = today;
-  $('dateLabel').textContent = today;
+  $('evDate').value = today; 
   $('evStatus').value = 'all';
 
   await loadRooms();
   await loadEvents();
   await loadTemplates();
-  updateSelectedEventsCount();
 })();
 </script>
 </body>

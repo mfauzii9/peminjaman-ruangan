@@ -21,8 +21,8 @@
       --muted:#64748b;
       --border:#e6eaf2;
 
-      --primary:#0f766e;
-      --primary2:#10b981;
+      --primary:#2563eb;
+      --primary2:#3b82f6;
 
       --radius:16px;
       --radius2:14px;
@@ -45,8 +45,8 @@
       --dangerBorder:rgba(239,68,68,.20);
       --slateBorder:rgba(71,85,105,.18);
 
-      --priSoft:rgba(16,185,129,.10);
-      --priBorder:rgba(16,185,129,.22);
+      --priSoft:rgba(59,130,246,.10);
+      --priBorder:rgba(59,130,246,.22);
     }
 
     *{ box-sizing:border-box; }
@@ -135,9 +135,9 @@
       gap:10px;
       padding:8px 12px;
       border-radius:999px;
-      background:rgba(16,185,129,.10);
-      border:1px solid rgba(16,185,129,.18);
-      color:#0f766e;
+      background:rgba(59,130,246,.10);
+      border:1px solid rgba(59,130,246,.18);
+      color:#2563eb;
       font-weight:750;
       font-size:12px;
       white-space:nowrap;
@@ -178,8 +178,8 @@
     .btn-primary{
       background:linear-gradient(135deg, var(--primary), var(--primary2));
       border-color:transparent;
-      color:#fff;
-      box-shadow:0 14px 34px rgba(16,185,129,.18);
+      color:#000000;
+      box-shadow:0 14px 34px rgba(59,130,246,.18);
     }
 
     .btn-mini{
@@ -256,7 +256,7 @@
 
     .note i{
       margin-top:2px;
-      color:#0f766e;
+      color:#2563eb;
     }
 
     /* ===== Card ===== */
@@ -294,9 +294,9 @@
       border-radius:12px;
       display:grid;
       place-items:center;
-      background:rgba(16,185,129,.10);
-      border:1px solid rgba(16,185,129,.18);
-      color:#0f766e;
+      background:rgba(59,130,246,.10);
+      border:1px solid rgba(59,130,246,.18);
+      color:#2563eb;
     }
 
     .cardSub{
@@ -539,8 +539,8 @@
       width:18px;
       height:18px;
       border-radius:999px;
-      border:3px solid rgba(16,185,129,.20);
-      border-top-color:rgba(16,185,129,.95);
+      border:3px solid rgba(59,130,246,.20);
+      border-top-color:rgba(59,130,246,.95);
       animation:spin .8s linear infinite;
     }
 
@@ -667,7 +667,7 @@
                 <table>
                   <thead>
                     <tr>
-                      <th style="width:90px;">ID</th>
+                      <th style="width:90px;">Dibuat</th>
                       <th style="width:160px;">Kode</th>
                       <th style="width:180px;">Ruangan</th>
                       <th style="width:230px;">Pemohon</th>
@@ -703,7 +703,8 @@
   </div>
 
   <script>
-    const URL_LIST    = @json(route('kema.pengajuan.list', [], false));
+    // PERBAIKAN PENTING: Mengembalikan URL Fetch ke route riwayat.list yang benar
+    const URL_LIST    = @json(route('kema.pengajuan.riwayat.list', [], false));
     const BASE_DETAIL = @json(url('/kema/pengajuan'));
 
     const overlay = document.getElementById('overlay');
@@ -788,7 +789,7 @@
 
     async function applyFilters(showToast=false){
       if (!URL_LIST){
-        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:22px; color:var(--muted); font-weight:600;">Route <b>kema.pengajuan.list</b> belum dibuat.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:22px; color:var(--muted); font-weight:600;">Route belum dibuat.</td></tr>`;
         return;
       }
 
@@ -797,16 +798,23 @@
       const dt = (dateTo.value || '').trim();
       const qq = (q.value || '').trim();
 
+      // Sinkronisasi otomatis ke URL Browser agar saat direfresh, filter tidak hilang
+      const currentUrl = new URL(window.location);
+      if (st !== 'all') currentUrl.searchParams.set('status', st); else currentUrl.searchParams.delete('status');
+      if (df) currentUrl.searchParams.set('date_from', df); else currentUrl.searchParams.delete('date_from');
+      if (dt) currentUrl.searchParams.set('date_to', dt); else currentUrl.searchParams.delete('date_to');
+      if (qq) currentUrl.searchParams.set('q', qq); else currentUrl.searchParams.delete('q');
+      window.history.replaceState({}, '', currentUrl);
+
       renderSkeleton();
       meta.textContent = 'Memuat data...';
 
-      const params = new URLSearchParams({
-        view: 'history',
-        status: st,
-        date_from: df,
-        date_to: dt,
-        q: qq
-      });
+      // Parameter untuk dikirim ke Backend
+      const params = new URLSearchParams();
+      if (st !== 'all') params.append('status', st);
+      if (df) params.append('date_from', df);
+      if (dt) params.append('date_to', dt);
+      if (qq) params.append('q', qq);
 
       let json;
       try{
@@ -848,8 +856,7 @@
         return `
           <tr>
             <td>
-              <div class="mainText">#${escapeHtml(r.id)}</div>
-              <div class="subText">${escapeHtml(r.created_at || '')}</div>
+              <div class="mainText">${escapeHtml(r.created_at || '')}</div>
             </td>
 
             <td>
@@ -891,6 +898,10 @@
       dateFrom.value = '';
       dateTo.value = '';
       q.value = '';
+      
+      // Hapus parameter dari URL
+      window.history.replaceState({}, '', window.location.pathname);
+      
       applyFilters(true);
     }
 
@@ -910,7 +921,7 @@
           </div>
         `,
         confirmButtonText:'Oke',
-        confirmButtonColor:'#10b981'
+        confirmButtonColor:'#3b82f6'
       });
     }
 
@@ -919,6 +930,13 @@
       clearTimeout(typingTimer);
       typingTimer = setTimeout(()=>applyFilters(false), 300);
     });
+
+    // MENGAMBIL PARAMETER DARI URL DAN MENGISIKAN KE FORM FILTER OTOMATIS
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('status')) kemaStatus.value = urlParams.get('status');
+    if (urlParams.has('date_from')) dateFrom.value = urlParams.get('date_from');
+    if (urlParams.has('date_to')) dateTo.value = urlParams.get('date_to');
+    if (urlParams.has('q')) q.value = urlParams.get('q');
 
     applyFilters(false);
   </script>
