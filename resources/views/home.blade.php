@@ -222,12 +222,12 @@
       box-shadow: var(--shadow-md);
     }
     .nav-pill.active {
-      background: var(--navy-800);
+      background: var(--lightblue-500);
       color: #ffffff;
-      border-color: var(--navy-800);
+      border-color: var(--lightblue-500);
     }
     .nav-pill.active i {
-      color: var(--sage-300);
+      color: #ffffff;
     }
 
     /* --- MAIN LAYOUT --- */
@@ -642,7 +642,7 @@
         <i class="fa-solid fa-house"></i> Jadwal Ruangan
       </a>
       <a href="{{ route('ruangan.index') }}" class="nav-pill">
-        <i class="fa-solid fa-layer-group"></i> Ajuan Peminjaman
+        <i class="fa-solid fa-layer-group"></i> Ajukan Peminjaman
       </a>
       <a href="{{ route('history.index') }}" class="nav-pill">
         <i class="fa-solid fa-clock-rotate-left"></i> Status Pengajuan
@@ -861,7 +861,7 @@
   </div>
 
   <div class="footer-bottom">
-    <p>&copy; {{ date('Y') }} Institut Digital Ekonomi LPKIA. by haikal</p>
+    <p>&copy; {{ date('Y') }} Institut Digital Ekonomi LPKIA. by RizkyFauzi</p>
   </div>
 </footer>
 

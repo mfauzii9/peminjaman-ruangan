@@ -692,6 +692,16 @@
         });
     }
 
+    // Menampilkan Popup Pemberitahuan Persyaratan Dokumen Saat Halaman Dimuat
+    @if(!session('error_conflict') && !session('error') && !$errors->any())
+        swalElegant({
+            icon: 'info',
+            title: 'Pemberitahuan',
+            html: 'Pastikan dokumen surat permohonan peminjaman yang akan Anda unggah <b>sudah ditandatangani oleh pihak Kemahasiswaan</b>.',
+            confirmText: 'Saya Mengerti'
+        });
+    @endif
+
     // Tangkap error bentrok dari controller
     @if(session('error_conflict') || session('error'))
         swalElegant({

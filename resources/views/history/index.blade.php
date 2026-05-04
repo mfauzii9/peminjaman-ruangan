@@ -58,7 +58,7 @@
       --shadow: var(--shadow-lg);
       --shadow2: var(--shadow-md);
 
-      --accent: var(--navy-800);
+      --accent: var(--lightblue-500);
       --accent2: var(--lightblue-500);
       --accentSoft: var(--lightblue-50);
 
@@ -109,7 +109,7 @@
     .cek-wrap .topbar { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 14px; border-radius: var(--radius-sm); border:1px solid var(--border); background: rgba(255,255,255,.9); backdrop-filter: blur(14px); box-shadow: var(--shadow2); }
     
     .cek-wrap .brand { display:flex; align-items:center; gap:10px; min-width:0; font-weight:900; letter-spacing:.2px; }
-    .cek-wrap .brand .logo { width:36px; height:36px; border-radius:8px; display:grid; place-items:center; background: linear-gradient(135deg, var(--navy-800), var(--navy-600)); box-shadow: var(--shadow-md); color:#fff; flex:0 0 auto; border:1px solid rgba(255,255,255,.35); }
+    .cek-wrap .brand .logo { width:36px; height:36px; border-radius:8px; display:grid; place-items:center; background: linear-gradient(135deg, var(--lightblue-500), var(--lightblue-300)); box-shadow: var(--shadow-md); color:#fff; flex:0 0 auto; border:1px solid rgba(255,255,255,.35); }
     .cek-wrap .brand .t { display:flex; flex-direction:column; line-height:1.15; min-width:0; }
     .cek-wrap .brand .t span { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size: 14.5px; font-weight: 800; color: var(--navy-900); }
     .cek-wrap .brand .t small { margin-top:2px; color:var(--muted); font-weight:600; font-size: 11px; }
@@ -170,7 +170,7 @@
         position: fixed;
         bottom: 30px;
         right: 30px;
-        background: var(--navy-800);
+        background: var(--lightblue-500);
         color: #ffffff;
         padding: 14px 24px;
         border-radius: 999px;

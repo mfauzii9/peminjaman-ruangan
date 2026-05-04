@@ -64,7 +64,7 @@
         --border: var(--border-light);
         --shadow2: var(--shadow-md);
         
-        --accent: var(--navy-800); 
+        --accent: var(--lightblue-500); 
         --accent2: var(--lightblue-500); 
         --accent-soft: var(--lightblue-50);
         
@@ -169,7 +169,7 @@
         position: fixed;
         bottom: 30px;
         right: 30px;
-        background: var(--navy-800);
+        background: var(--lightblue-500);
         color: #ffffff;
         padding: 14px 24px;
         border-radius: 999px;
@@ -306,7 +306,7 @@
       .pagination { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; background: rgba(255,255,255,.9); border: 1px solid var(--border); border-radius: 999px; padding: 8px 12px; box-shadow: var(--shadow-sm); backdrop-filter: blur(10px); }
       .pageItem { min-width: 36px; height: 36px; padding: 0 10px; border-radius: 999px; border: 1px solid transparent; background: transparent; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: var(--navy-800); text-decoration: none; transition: all .2s; }
       .pageItem:hover { background: var(--lightblue-50); border-color: var(--lightblue-300); transform: translateY(-1px); }
-      .pageItem.active { background: var(--navy-800); color: #fff; border-color: var(--navy-800); box-shadow: var(--shadow-sm); }
+      .pageItem.active { background: var(--lightblue-500); color: #fff; border-color: var(--lightblue-500); box-shadow: var(--shadow-sm); }
       .pageItem.disabled { opacity: .5; pointer-events: none; transform: none; }
 
       /* Modals */

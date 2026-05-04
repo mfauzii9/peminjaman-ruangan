@@ -58,7 +58,7 @@
       --shadow: var(--shadow-lg);
       --shadow2: var(--shadow-md);
 
-      --accent: var(--navy-800);
+      --accent: var(--lightblue-500);
       --accent2: var(--lightblue-500);
       --accentSoft: var(--lightblue-50);
 
@@ -96,7 +96,7 @@
     .topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: rgba(255,255,255,.9); backdrop-filter: blur(14px); box-shadow: var(--shadow2); }
     
     .brand { display: flex; align-items: center; gap: 10px; min-width: 0; font-weight: 800; letter-spacing: .2px; }
-    .brand .logo { width: 42px; height: 42px; border-radius: var(--radius-sm); display: grid; place-items: center; background: linear-gradient(135deg, var(--navy-800), var(--navy-600)); box-shadow: var(--shadow-sm); color: #fff; flex: 0 0 auto; border: 1px solid rgba(255,255,255,.35); }
+    .brand .logo { width: 42px; height: 42px; border-radius: var(--radius-sm); display: grid; place-items: center; background: linear-gradient(135deg, var(--lightblue-500), var(--lightblue-300)); box-shadow: var(--shadow-sm); color: #fff; flex: 0 0 auto; border: 1px solid rgba(255,255,255,.35); }
     .brand .t { display: flex; flex-direction: column; line-height: 1.15; min-width: 0; }
     .brand .t span { font-size: 15px; font-weight: 800; color: var(--navy-900); }
     .brand .t small { margin-top: 2px; color: var(--muted); font-weight: 600; font-size: 11.5px; }
@@ -133,7 +133,7 @@
     .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: var(--shadow-sm); }
     .btn.primary:hover { background: var(--lightblue-500); border-color: var(--lightblue-500); color: var(--navy-900); box-shadow: var(--shadow-md); }
     
-    .toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%) translateY(20px); background: var(--navy-900); color: #fff; padding: 10px 16px; border-radius: 999px; font-weight: 700; font-size: 12px; opacity: 0; pointer-events: none; transition: all .3s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: var(--shadow-lg); }
+    .toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%) translateY(20px); background: var(--lightblue-500); color: #fff; padding: 10px 16px; border-radius: 999px; font-weight: 700; font-size: 12px; opacity: 0; pointer-events: none; transition: all .3s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: var(--shadow-lg); }
     .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
     /* ===== Exit Reminder Modal ===== */
