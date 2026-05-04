@@ -21,11 +21,11 @@
     </button>
 
     <div class="sb__logo" aria-hidden="true">
-      <img src="https://ui-avatars.com/api/?name={{ urlencode($adminName) }}&background=ffffff&color=2563eb&size=150&bold=true" alt="Profile Foto">
+      <img src="{{ asset('assets/logo.jpeg') }}" alt="Logo LPKIA">
     </div>
     
     <div class="sb__titleMain">Peminjaman Ruangan</div>
-    <div class="sb__titleBadge">{{ strtoupper($role === 'kemahasiswaan' ? 'KEMA' : 'ADMIN') }}</div>
+    <div class="sb__titleBadge">{{ strtoupper($role) }}</div>
   </div>
 
   {{-- NAVIGATION --}}
@@ -82,7 +82,7 @@
       <div class="sb__avatar"><i class="fa-solid fa-user-tie"></i></div>
       <div class="sb__userinfo">
         <div class="sb__username">{{ $adminName }}</div>
-        <div class="sb__role">{{ $role === 'kemahasiswaan' ? 'Kemahasiswaan' : 'Administrator' }}</div>
+        <div class="sb__role">{{ $role === 'superadmin' ? 'Superadmin' : 'Administrator' }}</div>
       </div>
     </div>
 
@@ -342,7 +342,7 @@
           }
         })
         .catch(err => console.error("Polling Error:", err));
-      }, 1000); 
+      }, 15000); 
     }
 
     return { initSidebar, toggleSidebar, setPendingBadge, maybeShowPendingPopup, startPolling };

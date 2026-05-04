@@ -18,7 +18,7 @@
     </button>
 
     <div class="sb__logo" aria-hidden="true">
-      <img src="https://ui-avatars.com/api/?name={{ urlencode($adminName) }}&background=ffffff&color=2563eb&size=150&bold=true" alt="Profile Foto">
+      <img src="{{ asset('assets/logo.jpeg') }}" alt="Logo Kemahasiswaan">
     </div>
     
     <div class="sb__titleMain">Peminjaman Ruangan</div>
